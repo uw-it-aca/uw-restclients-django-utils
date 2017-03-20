@@ -141,7 +141,6 @@ class TimeCacheTest(TestCase):
             service="four", url="/invalid")
 
         # Make sure that invalid entry stops being returned after 5 mintes
-        #cache_entry = query[0]
         cache_entry.time_saved = cache_entry.time_saved - timedelta(minutes=5)
         cache_entry.save()
 
