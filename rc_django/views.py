@@ -87,7 +87,7 @@ def proxy(request, service, url):
     headers = {}
 
     try:
-	mod_str = SERVICES[service]
+        mod_str = SERVICES[service]
         dao = get_class(mod_str)
     except KeyError:
         return HttpResponseNotFound("Unknown service: %s" % service)
@@ -97,7 +97,6 @@ def proxy(request, service, url):
     if service == "sws":
         headers["X-UW-Act-as"] = actual_user
     elif service == "iasystem":
-        dao = IASYSTEM_DAO()
         headers = {"Accept": "application/vnd.collection+json"}
         subdomain = None
         if url.endswith('/evaluation'):
@@ -109,7 +108,6 @@ def proxy(request, service, url):
                 url = url[3:]
 
     elif service == "calendar":
-        dao = TrumbaCalendar_DAO()
         use_pre = True
 
     url = "/%s" % quote(url)

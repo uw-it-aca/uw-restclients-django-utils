@@ -80,7 +80,7 @@ class ViewTest(TestCase):
         # Something was sending urls that should have been
         # ...=&reg_id=... into ...=®_id=A
         # That should be fixed, but in the mean time we shouldn't crash
-        request = RequestFactory().get("/", { "i": "u\xae_id=A" })
+        request = RequestFactory().get("/", {"i": "u\xae_id=A"})
         SessionMiddleware().process_request(request)
         AuthenticationMiddleware().process_request(request)
         UserServiceMiddleware().process_request(request)
@@ -94,7 +94,7 @@ class ViewTest(TestCase):
                            AUTHZ_GROUP_BACKEND=backend):
 
             # Add the testing DAO service
-	    SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
+            SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
             res = proxy(request, "test", "/fake/")
             self.assertEquals(
                 res.content, "Bad URL param given to the restclients browser")
@@ -103,7 +103,6 @@ class ViewTest(TestCase):
 
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
             "restclients urls not configured")
-
     def test_support_links(self):
         SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
         url = reverse("restclients_proxy", args=["test", "/test/v1"])

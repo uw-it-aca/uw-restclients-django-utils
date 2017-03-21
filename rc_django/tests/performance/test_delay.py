@@ -31,13 +31,13 @@ class Backend(MockDAO):
 
 class DegradedTestCase(TestCase):
     def test_degraded(self):
-        r1  = RequestFactory().post(reverse("restclients_errors"), {
+        r1 = RequestFactory().post(reverse("restclients_errors"), {
             "new_service_name": "delay",
             "new_service_status": 500,
             "new_service_content": "[oops",
             "new_service_load_time": 0.1,
         })
-        r2  = RequestFactory().get("/")
+        r2 = RequestFactory().get("/")
 
         SessionMiddleware().process_request(r1)
         SessionMiddleware().process_request(r2)
