@@ -1,0 +1,52 @@
+
+{% extends wrapper_template %}
+{% block content %}
+<p>This page lets you cause various problems in restclients.  You can force a specific service to give you a specific response code, specific content, or take an extra amount of time</p>
+
+<form action="{% url 'restclients_errors' %}" method="POST">
+{% csrf_token %}
+
+{% if errors %}
+<h3>Existing</h3>
+{% for error in errors %}
+<label><input type="checkbox" name="keep_{{ error.name }}" checked="checked"> {{ error.name }}</label>
+<br>
+<label>Response Code (e.g. 500): <input type="text" name="{{ error.name }}_status" value="{{ error.status }}"/></label> <br/>
+<label>Content (can be empty, but you could do something like { "oops } ): <input type="text" name="{{ error.name }}_content" value="{{ error.content }}"/></label> <br/>
+<label>Add seconds to the response time (e.g. 2.5): <input type="text" name="{{ error.name }}_load_time" value="{{ error.load_time }}"/></label> <br/>
+{% endfor %}
+{% endif %}
+
+<h3>Add new:</h3>
+<label>Select a service:
+<select name="new_service_name">
+  <option value="" selected></option>
+  <option value="book">Textbook</option>
+  <option value="bridge">Bridge</option>
+  <option value="canvas">Canvas</option>
+  <option value="grad">Grad</option>
+  <option value="gws">GWS</option>
+  <option value="hfs">HFS</option>
+  <option value="iasystem">Iasystem</option>
+  <option value="libcurrics">Library currics</option>
+  <option value="libraries">My library Account</option>
+  <option value="mailman">Mailman</option>
+  <option value="myplan">MyPlan</option>
+  <option value="pws">PWS</option>
+  <option value="r25">R25</option>
+  <option value="sws">SWS</option>
+  <option value="trumba_calendar">Trumba calendar</option>
+  <option value="uwnetid">Uwnetid</option>
+  <option value="upass">UPASS</option>
+</select>
+</label>
+<br/>
+<label>Response Status(e.g. 500): <input type="text" name="new_service_status" /></label> <br/>
+<label>Content (can be empty, but you could do something like { "oops } ): <input type="text" name="new_service_content" /></label> <br/>
+<label>Add seconds to the response time (e.g. 2.5): <input type="text" name="new_service_load_time" /></label> <br/>
+
+<input type="submit" value="Update all settings"/>
+
+</form>
+
+{% endblock %}

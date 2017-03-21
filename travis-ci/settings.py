@@ -96,3 +96,6 @@ LOGGING = {
     'handlers': {},
     'loggers': {},
 }
+
+RESTCLIENTS_ADMIN_GROUP='ok'
+AUTHZ_GROUP_BACKEND = 'authz_group.authz_implementation.all_ok.AllOK'
