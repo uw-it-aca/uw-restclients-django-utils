@@ -12,8 +12,11 @@ from rc_django.models import DegradePerformance
 from authz_group import Group
 from userservice.user import UserService
 from time import time
-from urllib import quote, unquote, urlencode
-from urlparse import urlparse, parse_qs
+try:
+    from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
+except ImportError:
+    from urllib import quote, unquote, urlencode
+    from urlparse import urlparse, parse_qs
 from base64 import b64encode
 import json
 import re
