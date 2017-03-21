@@ -40,8 +40,8 @@ SERVICES = {
 def require_admin(view_func):
     def wrapper(*args, **kwargs):
         if not hasattr(settings, "RESTCLIENTS_ADMIN_GROUP"):
-            print "You must have a group defined as your admin group."
-            print 'Configure that using RESTCLIENTS_ADMIN_GROUP="u_foo_bar"'
+            print("You must have a group defined as your admin group. "
+                  "Configure that using RESTCLIENTS_ADMIN_GROUP='u_foo_bar'")
             raise Exception("Missing RESTCLIENTS_ADMIN_GROUP in settings")
 
         user_service = UserService()
