@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
-from django.http import (
-    HttpResponse, HttpResponseNotFound, HttpResponseRedirect)
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader, RequestContext, TemplateDoesNotExist
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
@@ -93,9 +92,9 @@ def proxy(request, service, url):
         mod_str = SERVICES[service]
         dao = get_class(mod_str)
     except KeyError:
-        return HttpResponseNotFound("Unknown service: %s" % service)
+        return HttpResponse("Unknown service: %s" % service, status=400)
     except (AttributeError, ImportError):
-        return HttpResponseNotFound("Missing service: %s" % service)
+        return HttpResponse("Missing service: %s" % service, status=404)
 
     if service == "sws":
         headers["X-UW-Act-as"] = actual_user
@@ -120,7 +119,7 @@ def proxy(request, service, url):
             url = "%s?%s" % (url, urlencode(request.GET))
         except UnicodeEncodeError:
             err = "Bad URL param given to the restclients browser"
-            return HttpResponse(err)
+            return HttpResponse(err, status=400)
 
     start = time()
     try:

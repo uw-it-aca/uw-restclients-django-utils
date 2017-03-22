@@ -96,9 +96,7 @@ class ViewTest(TestCase):
             # Add the testing DAO service
             SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
             res = proxy(request, "test", "/fake/")
-            self.assertEquals(
-                res.content, "Bad URL param given to the restclients browser")
-            self.assertEquals(res.status_code, 200)
+            self.assertEquals(res.status_code, 400)
             del SERVICES["test"]
 
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
@@ -122,14 +120,12 @@ class ViewTest(TestCase):
         # Unknown service
         url = reverse("restclients_proxy", args=["999", "/test/v1"])
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 404)
-        self.assertEquals(response.content, "Unknown service: 999")
+        self.assertEquals(response.status_code, 400)
 
         # Missing service
         url = reverse("restclients_proxy", args=["pws", "/test/v1"])
         response = self.client.get(url)
         self.assertEquals(response.status_code, 404)
-        self.assertEquals(response.content, "Missing service: pws")
 
     def test_get_class(self):
         self.assertEquals(
