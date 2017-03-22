@@ -20,6 +20,8 @@ setup(
     install_requires=[
         'Django==1.10.5',
         'UW-RestClients-Core>0.8',
+        'AuthZ-Group',
+        'django-userservice==1.2.1',
         'python-binary-memcached'
     ],
     license='Apache License, Version 2.0',
