@@ -105,11 +105,12 @@ class ViewTest(TestCase):
             "restclients urls not configured")
     def test_support_links(self):
         SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
+        url = reverse("restclients_proxy", args=["test", "/test/v1"])
         get_user('test_view')
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
 
-        response = self.client.get("/view/test/test/v1")
+        response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
         del SERVICES["test"]
 
@@ -119,12 +120,14 @@ class ViewTest(TestCase):
             username='test_view', password=get_user_pass('test_view'))
 
         # Unknown service
-        response = self.client.get("/view/999/test/v1")
+        url = reverse("restclients_proxy", args=["999", "/test/v1"])
+        response = self.client.get(url)
         self.assertEquals(response.status_code, 404)
         self.assertEquals(response.content, "Unknown service: 999")
 
         # Missing service
-        response = self.client.get("/view/pws/test/v1")
+        url = reverse("restclients_proxy", args=["pws", "/test/v1"])
+        response = self.client.get(url)
         self.assertEquals(response.status_code, 404)
         self.assertEquals(response.content, "Missing service: pws")
 
