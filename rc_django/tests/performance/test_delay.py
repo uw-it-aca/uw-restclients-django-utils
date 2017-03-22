@@ -1,5 +1,4 @@
 from django.test import TestCase, RequestFactory
-from django.core.urlresolvers import reverse
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.auth.models import User
@@ -31,7 +30,7 @@ class Backend(MockDAO):
 
 class DegradedTestCase(TestCase):
     def test_degraded(self):
-        r1 = RequestFactory().post(reverse("restclients_errors"), {
+        r1 = RequestFactory().post("/errors", {
             "new_service_name": "delay",
             "new_service_status": 500,
             "new_service_content": "[oops",
