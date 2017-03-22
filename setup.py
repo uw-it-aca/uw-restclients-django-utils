@@ -6,6 +6,11 @@ See the README on `GitHub
 <https://github.com/uw-it-aca/uw-restclients-django-utils>`_.
 """
 
+# The VERSION file is created by travis-ci, based on the tag name
+version_path = 'rc_django/VERSION'
+VERSION = open(os.path.join(os.path.dirname(__file__), version_path)).read()
+VERSION = VERSION.replace("\n", "")
+
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
