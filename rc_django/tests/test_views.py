@@ -9,8 +9,11 @@ from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
 from rc_django.views import proxy, clean_self_closing_divs, get_class, SERVICES
 from userservice.user import UserServiceMiddleware
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
 from unittest import skipIf
-import os
 
 
 class TEST_DAO(DAO):
@@ -95,8 +98,12 @@ class ViewTest(TestCase):
 
             # Add the testing DAO service
             SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
-            res = proxy(request, "test", "/fake/")
-            self.assertEquals(res.status_code, 400)
+            response = proxy(request, "test", "/fake/")
+            try:
+                params = urlencode(request.GET)
+                self.assertEquals(response.status_code, 200)
+            except UnicodeEncodeError as err:
+                self.assertEquals(response.status_code, 400)
             del SERVICES["test"]
 
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),

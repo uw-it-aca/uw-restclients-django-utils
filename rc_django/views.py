@@ -117,8 +117,7 @@ def proxy(request, service, url):
     if request.GET:
         try:
             url = "%s?%s" % (url, urlencode(request.GET))
-        except UnicodeEncodeError:
-            err = "Bad URL param given to the restclients browser"
+        except UnicodeEncodeError as err:
             return HttpResponse(err, status=400)
 
     start = time()
