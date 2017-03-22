@@ -13,6 +13,7 @@ before_script:
 - cp travis-ci/manage.py manage.py
 script:
 - pep8 rc_django/ --exclude=migrations
+- python -m compileall rc_django/
 - coverage run --source=rc_django/ --omit=rc_django/migrations/* manage.py test rc_django
 after_success:
 - coveralls
