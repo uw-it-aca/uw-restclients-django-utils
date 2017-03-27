@@ -17,7 +17,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 url = "https://github.com/uw-it-aca/uw-restclients-django-utils"
 setup(
     name='UW-RestClients-Django-Utils',
-    version='1.0',
+    version=VERSION,
     packages=['rc_django'],
     author="UW-IT AXDD",
     author_email="aca-it@uw.edu",
