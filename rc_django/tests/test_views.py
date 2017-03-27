@@ -9,10 +9,6 @@ from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
 from rc_django.views import proxy, clean_self_closing_divs, get_class, SERVICES
 from userservice.user import UserServiceMiddleware
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode
 from unittest import skipIf
 
 
@@ -99,11 +95,9 @@ class ViewTest(TestCase):
             # Add the testing DAO service
             SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
             response = proxy(request, "test", "/fake/")
-            try:
-                params = urlencode(request.GET)
-                self.assertEquals(response.status_code, 200)
-            except UnicodeEncodeError as err:
-                self.assertEquals(response.status_code, 400)
+
+            # Test that the bad param doesn't cause a non-200 response
+            self.assertEquals(response.status_code, 200)
             del SERVICES["test"]
 
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
