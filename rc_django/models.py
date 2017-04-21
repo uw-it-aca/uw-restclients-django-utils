@@ -13,6 +13,7 @@ class CacheEntry(models.Model):
     headers = None
 
     class Meta:
+        app_label = 'rc_django'
         db_table = 'restclients_cacheentry'
         unique_together = ('service', 'url')
 
@@ -54,6 +55,7 @@ class CacheEntryTimed(CacheEntry):
     objects = CacheEntryTimedManager()
 
     class Meta:
+        app_label = 'rc_django'
         db_table = 'restclients_cacheentrytimed'
 
 

@@ -14,7 +14,10 @@ before_script:
 script:
 - pep8 rc_django/ --exclude=migrations
 - python -m compileall rc_django/
-- coverage run --source=rc_django/ --omit=rc_django/migrations/* manage.py test rc_django
+- COVERAGE_FILE=.coverage coverage run --source=rc_django/ --omit=rc_django/migrations/* manage.py test rc_django
+- cp travis-ci/settings_without_installed_app.py travis-ci/settings.py
+- COVERAGE_FILE=.coverage_app_label coverage run --source=rc_django/ --omit=rc_django/migrations/* manage.py test rc_django.tests.test_models
+- coverage combine
 after_success:
 - coveralls
 before_deploy:
