@@ -7,7 +7,8 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
-from rc_django.views import proxy, clean_self_closing_divs, get_class, SERVICES
+from rc_django.views import (
+    proxy, clean_self_closing_divs, format_json, get_dao_instance, SERVICES)
 from userservice.user import UserServiceMiddleware
 from unittest import skipIf
 
@@ -100,6 +101,21 @@ class ViewTest(TestCase):
             self.assertEquals(response.status_code, 200)
             del SERVICES["test"]
 
+    def test_format_json(self):
+        service = 'pws'
+        json_data = '{"Href": "/identity/v1/entity.json"}'
+        formatted = (u'{<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;"Href":&nbsp;'
+                     u'"<a href="/view/pws/identity/v1/entity.json">'
+                     u'/identity/v1/entity.json</a>"<br/>\n}')
+        self.assertEquals(formatted, format_json(service, json_data))
+
+        json_data = '{"Decimal": 5.678}'
+        formatted = ('{<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;"Decimal":'
+                     '&nbsp;5.678<br/>\n}')
+        self.assertEquals(formatted, format_json(service, json_data))
+
+        self.assertRaises(ValueError, format_json, service, '<p></p>')
+
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
             "restclients urls not configured")
     def test_support_links(self):
@@ -128,11 +144,16 @@ class ViewTest(TestCase):
         response = self.client.get(url)
         self.assertEquals(response.status_code, 404)
 
-    def test_get_class(self):
-        self.assertEquals(
-            get_class("rc_django.tests.test_views.TEST_DAO"), TEST_DAO)
-        self.assertRaises(
-            ImportError, get_class, "uw_pws.dao.PWS_DAO")
-        self.assertRaises(
-            AttributeError, get_class, "rc_django.tests.test_views.fake")
-        self.assertRaises(ValueError, get_class, "Fake")
+    def test_get_dao_instance(self):
+        # Unknown service
+        self.assertRaises(KeyError, get_dao_instance, "test")
+
+        # Add it
+        SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
+        self.assertEquals(type(get_dao_instance("test")), TEST_DAO)
+
+        # Missing service
+        self.assertRaises(ImportError, get_dao_instance, "pws")
+
+        SERVICES["broken"] = "broken"
+        self.assertRaises(ValueError, get_dao_instance, "broken")
