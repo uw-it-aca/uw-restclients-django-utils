@@ -43,7 +43,7 @@ class CacheEntry(models.Model):
 
     @staticmethod
     def get_url_key(url):
-        return sha1(url).hexdigest()
+        return sha1(url.encode('utf-8')).hexdigest()
 
 
 class CacheEntryTimedManager(models.Manager):
