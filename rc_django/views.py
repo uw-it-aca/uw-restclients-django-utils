@@ -69,13 +69,14 @@ def set_wrapper_template(context):
         context["wrapper_template"] = "proxy_wrapper.html"
 
 
-def get_class(classname):
+def get_dao_instance(service):
+    classname = SERVICES[service]
     parts = classname.split(".")
     module = ".".join(parts[:-1])
     m = __import__(module)
     for comp in parts[1:]:
         m = getattr(m, comp)
-    return m
+    return m()
 
 
 @login_required
@@ -89,8 +90,7 @@ def proxy(request, service, url):
     headers = {}
 
     try:
-        mod_str = SERVICES[service]
-        dao = get_class(mod_str)
+        dao = get_dao_instance(service)
     except KeyError:
         return HttpResponse("Unknown service: %s" % service, status=400)
     except (AttributeError, ImportError):
@@ -161,7 +161,7 @@ def proxy(request, service, url):
         else:
             content = response.data
             json_data = None
-    except Exception as e:
+    except ValueError:
         content = format_html(service, response.data)
         json_data = None
 
@@ -208,7 +208,7 @@ def format_search_params(url):
 
 
 def format_json(service, content):
-    json_data = json.loads(content, use_decimal=True)
+    json_data = json.loads(content)
     formatted = json.dumps(json_data, sort_keys=True, indent=4)
     formatted = formatted.replace("&", "&amp;")
     formatted = formatted.replace("<", "&lt;")
