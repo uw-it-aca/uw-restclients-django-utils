@@ -6,7 +6,7 @@ import json
 
 class CacheEntry(models.Model):
     service = models.CharField(max_length=50, db_index=True)
-    url = models.CharField(max_length=255, unique=True, db_index=True)
+    url = models.CharField(max_length=512, unique=True, db_index=True)
     status = models.PositiveIntegerField()
     header_pickle = models.TextField()
     content = models.TextField()
