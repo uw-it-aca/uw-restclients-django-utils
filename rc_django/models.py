@@ -1,12 +1,14 @@
 from django.db import models
 from base64 import b64encode, b64decode
+from hashlib import sha1
 import pickle
 import json
 
 
 class CacheEntry(models.Model):
     service = models.CharField(max_length=50, db_index=True)
-    url = models.CharField(max_length=512, unique=True, db_index=True)
+    url = models.TextField()
+    url_key = models.SlugField(max_length=40, unique=True)
     status = models.PositiveIntegerField()
     header_pickle = models.TextField()
     content = models.TextField()
@@ -15,7 +17,7 @@ class CacheEntry(models.Model):
     class Meta:
         app_label = 'rc_django'
         db_table = 'restclients_cacheentry'
-        unique_together = ('service', 'url')
+        unique_together = ('service', 'url_key')
 
     def getHeaders(self):
         if self.headers is None:
@@ -36,17 +38,23 @@ class CacheEntry(models.Model):
             pickle_content = pickle.dumps({})
 
         self.header_pickle = b64encode(pickle_content)
+        self.url_key = self.get_url_key(self.url)
         super(CacheEntry, self).save(*args, **kwargs)
+
+    @staticmethod
+    def get_url_key(url):
+        return sha1(url.encode('utf-8')).hexdigest()
 
 
 class CacheEntryTimedManager(models.Manager):
     def find_nonexpired_by_service_and_url(self, service, url, time_limit):
         return super(CacheEntryTimedManager, self).get_queryset().filter(
-            service=service, url=url, time_saved__gte=time_limit)
+            service=service, url_key=CacheEntry.get_url_key(url),
+            time_saved__gte=time_limit)
 
     def find_by_service_and_url(self, service, url):
         return super(CacheEntryTimedManager, self).get_queryset().filter(
-            service=service, url=url)
+            service=service, url_key=CacheEntry.get_url_key(url))
 
 
 class CacheEntryTimed(CacheEntry):
