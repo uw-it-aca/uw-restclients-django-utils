@@ -17,13 +17,22 @@ class Migration(migrations.Migration):
             name='url_key',
             field=models.SlugField(max_length=40, null=True),
         ),
+        migrations.AlterUniqueTogether(
+            name='cacheentry',
+            unique_together=set([]),
+        ),
         migrations.AlterField(
             model_name='cacheentry',
             name='url',
             field=models.TextField(),
         ),
+        migrations.AlterField(
+            model_name='cacheentry',
+            name='url_key',
+            field=models.SlugField(max_length=40, unique=True),
+        ),
         migrations.AlterUniqueTogether(
             name='cacheentry',
-            unique_together=set([]),
+            unique_together=set([('service', 'url_key')]),
         ),
     ]
