@@ -32,9 +32,13 @@
 
     </div>
 </div>
-{% endblock %}
+{% endblock content %}
+
 {% block extra_js %}
+{{ block.super }}
 {% if json_data %}
-<script>window.restclients_json_data = {{json_data|safe}};</script>
+<script type="text/javascript">
+    window.restclients_json_data = {{json_data|safe}};
+</script>
 {% endif %}
-{% endblock %}
+{% endblock extra_js %}
