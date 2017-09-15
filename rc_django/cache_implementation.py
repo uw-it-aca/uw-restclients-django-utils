@@ -208,7 +208,7 @@ class MemcachedCache(object):
 
         return {"response": response}
 
-       def processResponse(self, service, url, response):
+   def processResponse(self, service, url, response):
         # Optionally cache 404s, don't cache other error status codes
         cache_404 = self.get_404_cache_policy(service, url)
         if cache_404 and response.status == 404:
