@@ -36,7 +36,7 @@ class MemcachedCacheTest(TestCase):
     def test_memcached(self):
         cache = MemcachedCache()
         client = MEM_DAO()
-        sws.getURL('/same', {})
+        client.getURL('/same', {})
 
         hit = cache.getCache('mem', '/same', {})
         response = hit["response"]
@@ -48,6 +48,20 @@ class MemcachedCacheTest(TestCase):
 
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, "Body Content")
+
+    @skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
+            "Needs configuration to test memcached cache")
+    def test_memcached_404(self):
+        cache = MemcachedCache()
+        client = MEM_DAO()
+        client.getURL('/asd', {})
+
+        hit = cache.getCache('mem', '/asd', {})
+        response = hit["response"]
+        self.assertEquals(response.status, 404)
+
+        hit = cache.getCache('mem', '/asd', {})
+        self.assertEquals(response.status, 404)
 
     @skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
             "Needs configuration to test memcached cache")

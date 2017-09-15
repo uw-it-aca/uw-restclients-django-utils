@@ -199,8 +199,6 @@ class MemcachedCache(object):
             return
 
         values = json.loads(data)
-        if "b64_data" in data:
-            values["data"] = b64decode(values["b64_data"])
         response = MockHTTP()
         response.status = values["status"]
         response.data = values["data"]
@@ -209,17 +207,12 @@ class MemcachedCache(object):
         return {"response": response}
 
     def processResponse(self, service, url, response):
-        if response.status != 200:
-            # don't cache errors, at least for now...
-            return
-
         header_data = {}
         for header in response.headers:
             header_data[header] = response.getheader(header)
 
-        b64_data = b64encode(response.data)
         data = json.dumps({"status": response.status,
-                           "b64_data": b64_data,
+                           "data": response.data,
                            "headers": header_data})
 
         time_to_store = self.get_cache_expiration_time(service, url)
