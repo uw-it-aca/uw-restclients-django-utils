@@ -207,10 +207,6 @@ class MemcachedCache(object):
         return {"response": response}
 
     def processResponse(self, service, url, response):
-        if response.status != 200:
-            # don't cache errors, at least for now...
-            return
-
         header_data = {}
         for header in response.headers:
             header_data[header] = response.getheader(header)
