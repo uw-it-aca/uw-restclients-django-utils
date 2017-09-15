@@ -218,6 +218,7 @@ class MemcachedCache(object):
             header_data[header] = response.getheader(header)
 
         b64_data = b64encode(response.data.encode('ascii'))
+        b64_string = b64_data.decode('utf-8')
         data = json.dumps({"status": response.status,
                            "b64_data": b64_data,
                            "headers": header_data})
