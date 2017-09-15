@@ -208,9 +208,12 @@ class MemcachedCache(object):
 
         return {"response": response}
 
-    def processResponse(self, service, url, response):
-        if response.status != 200:
-            # don't cache errors, at least for now...
+       def processResponse(self, service, url, response):
+        # Optionally cache 404s, don't cache other error status codes
+        cache_404 = self.get_404_cache_policy(service, url)
+        if cache_404 and response.status == 404:
+            pass
+        elif response.status != 200:
             return
 
         header_data = {}
@@ -238,6 +241,10 @@ class MemcachedCache(object):
     def get_cache_expiration_time(self, service, url):
         # Over-ride this to define your own.
         return 60 * 60 * 4
+
+    def get_404_cache_policy(self, service, url):
+        # Over-ride this to define your own.
+        return False
 
     def _get_key(self, service, url):
         return "%s-%s" % (service, url)
