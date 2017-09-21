@@ -216,7 +216,7 @@ class MemcachedCache(object):
         b64_data = b64encode(response.data)
         data = json.dumps({"status": response.status,
                            "b64_data": b64_data,
-                           "headers": header_data})d
+                           "headers": header_data})
 
         time_to_store = self.get_cache_expiration_time(service, url)
         key = self._get_key(service, url)
