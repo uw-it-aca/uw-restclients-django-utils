@@ -36,7 +36,7 @@ class MemcachedCacheTest(TestCase):
     def test_memcached(self):
         cache = MemcachedCache()
         client = MEM_DAO()
-        sws.getURL('/same', {})
+        client.getURL('/same', {})
 
         hit = cache.getCache('mem', '/same', {})
         response = hit["response"]

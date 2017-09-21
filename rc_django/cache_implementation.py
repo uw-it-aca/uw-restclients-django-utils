@@ -209,10 +209,6 @@ class MemcachedCache(object):
         return {"response": response}
 
     def processResponse(self, service, url, response):
-        if response.status != 200:
-            # don't cache errors, at least for now...
-            return
-
         header_data = {}
         for header in response.headers:
             header_data[header] = response.getheader(header)
@@ -220,7 +216,7 @@ class MemcachedCache(object):
         b64_data = b64encode(response.data)
         data = json.dumps({"status": response.status,
                            "b64_data": b64_data,
-                           "headers": header_data})
+                           "headers": header_data})d
 
         time_to_store = self.get_cache_expiration_time(service, url)
         key = self._get_key(service, url)
