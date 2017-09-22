@@ -199,6 +199,8 @@ class MemcachedCache(object):
             return
 
         values = json.loads(data)
+        if "b64_data" in data:
+            values["data"] = b64decode(values["b64_data"])
         response = MockHTTP()
         response.status = values["status"]
         response.data = values["data"]
@@ -211,8 +213,9 @@ class MemcachedCache(object):
         for header in response.headers:
             header_data[header] = response.getheader(header)
 
+        b64_data = b64encode(response.data)
         data = json.dumps({"status": response.status,
-                           "data": response.data,
+                           "b64_data": b64_data,
                            "headers": header_data})
 
         time_to_store = self.get_cache_expiration_time(service, url)
