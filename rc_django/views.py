@@ -6,6 +6,7 @@ from django.template import loader, RequestContext, TemplateDoesNotExist
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
 from importlib import import_module
+from restclients_core.dao import DAO
 from restclients_core.models import MockHTTP
 from rc_django.models import DegradePerformance
 from authz_group import Group
@@ -19,24 +20,6 @@ except ImportError:
 from base64 import b64encode
 import json
 import re
-
-
-SERVICES = {
-    "sws": "uw_sws.dao.SWS_DAO",
-    "pws": "uw_pws.dao.PWS_DAO",
-    "gws": "uw_gws.dao.GWS_DAO",
-    "nws": "uw_nws.dao.NWS_DAO",
-    "hfs": "uw_hfs.dao.Hfs_DAO",
-    "book": "restclients.dao.Book_DAO",
-    "canvas": "uw_canvas.dao.Canvas_DAO",
-    "grad": "restclients.dao.Grad_DAO",
-    "uwnetid": "restclients.dao.Uwnetid_DAO",
-    "libraries": "uw_libraries.dao.MyLib_DAO",
-    "libcurrics": "uw_libraries.dao.SubjectGuide_DAO",
-    "myplan": "restclients.dao.MyPlan_DAO",
-    "iasystem": "restclients.dao.IASYSTEM_DAO",
-    "calendar": "restclients.dao.TrumbaCalendar_DAO",
-}
 
 
 def require_admin(view_func):
@@ -70,13 +53,11 @@ def set_wrapper_template(context):
 
 
 def get_dao_instance(service):
-    classname = SERVICES[service]
-    parts = classname.split(".")
-    module = ".".join(parts[:-1])
-    m = __import__(module)
-    for comp in parts[1:]:
-        m = getattr(m, comp)
-    return m()
+    for subclass in DAO.__subclasses__():
+        dao = subclass()
+        if dao.service_name() == service:
+            return dao
+    raise ImportError()
 
 
 @login_required
@@ -91,8 +72,6 @@ def proxy(request, service, url):
 
     try:
         dao = get_dao_instance(service)
-    except KeyError:
-        return HttpResponse("Unknown service: %s" % service, status=400)
     except (AttributeError, ImportError):
         return HttpResponse("Missing service: %s" % service, status=404)
 

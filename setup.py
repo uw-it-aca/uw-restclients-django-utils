@@ -23,7 +23,7 @@ setup(
     author_email="aca-it@uw.edu",
     include_package_data=True,
     install_requires=[
-        'Django==1.10.5',
+        'Django==1.11.10',
         'UW-RestClients-Core>0.8',
         'AuthZ-Group',
         'django-userservice==1.2.1',
