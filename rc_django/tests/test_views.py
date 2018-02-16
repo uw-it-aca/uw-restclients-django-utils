@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
 from rc_django.views import (
-    proxy, clean_self_closing_divs, format_json, get_dao_instance, SERVICES)
+    proxy, clean_self_closing_divs, format_json, get_dao_instance)
 from userservice.user import UserServiceMiddleware
 from unittest import skipIf
 
@@ -94,12 +94,10 @@ class ViewTest(TestCase):
                            AUTHZ_GROUP_BACKEND=backend):
 
             # Add the testing DAO service
-            SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
             response = proxy(request, "test", "/fake/")
 
             # Test that the bad param doesn't cause a non-200 response
             self.assertEquals(response.status_code, 200)
-            del SERVICES["test"]
 
     def test_format_json(self):
         service = 'pws'
@@ -119,7 +117,6 @@ class ViewTest(TestCase):
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
             "restclients urls not configured")
     def test_support_links(self):
-        SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
         url = reverse("restclients_proxy", args=["test", "/test/v1"])
         get_user('test_view')
         self.client.login(username='test_view',
@@ -127,33 +124,19 @@ class ViewTest(TestCase):
 
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
-        del SERVICES["test"]
 
     def test_service_errors(self):
         get_user('test_view')
         self.client.login(
             username='test_view', password=get_user_pass('test_view'))
 
-        # Unknown service
-        url = reverse("restclients_proxy", args=["999", "/test/v1"])
-        response = self.client.get(url)
-        self.assertEquals(response.status_code, 400)
-
         # Missing service
-        url = reverse("restclients_proxy", args=["pws", "/test/v1"])
+        url = reverse("restclients_proxy", args=["fake", "/test/v1"])
         response = self.client.get(url)
         self.assertEquals(response.status_code, 404)
 
     def test_get_dao_instance(self):
-        # Unknown service
-        self.assertRaises(KeyError, get_dao_instance, "test")
-
-        # Add it
-        SERVICES["test"] = "rc_django.tests.test_views.TEST_DAO"
         self.assertEquals(type(get_dao_instance("test")), TEST_DAO)
 
         # Missing service
-        self.assertRaises(ImportError, get_dao_instance, "pws")
-
-        SERVICES["broken"] = "broken"
-        self.assertRaises(ValueError, get_dao_instance, "broken")
+        self.assertRaises(ImportError, get_dao_instance, "fake")
