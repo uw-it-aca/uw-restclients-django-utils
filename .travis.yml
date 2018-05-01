@@ -5,7 +5,7 @@ python:
 - '3.6'
 before_script:
 - pip install -e .
-- pip install pycodestyle
+- pip install pycodestyle==2.3.1
 - pip install coverage
 - pip install python-coveralls
 - cp travis-ci/manage.py manage.py
