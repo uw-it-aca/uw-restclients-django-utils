@@ -1,0 +1,32 @@
+<h1>Person Search (Proxy)</h1>
+<form method="get" action="person.json">
+    <div><label for="uwregid">UW RegID:</label> <input class="uwregid" id="uwregid" name="uwregid" value="{{search.uwregid}}" size="50" type="text"></div>
+    <div><label for="uwnetid">UW NetID:</label> <input class="uwnetid" id="uwnetid" name="uwnetid" value="{{search.uwnetid}}" type="text"></div>
+    <div><label for="employee_id">Employee ID:</label> <input class="employee_id" id="employee_id" name="employee_id" value="{{search.employee_id}}" type="text"></div>
+    <div><label for="student_number">Student number:</label> <input class="student_number" id="student_number" name="student_number" size="8" value="{{search.student_number}}" type="text"></div>
+    <div><label for="student_system_key">Student system key:</label> <input class="student_system_key" id="student_system_key" name="student_system_key" size="10" value="{{search.student_system_key}}" type="text"></div>
+    <div><label for="development_id">Development ID:</label> <input class="development_id" id="development_id" name="development_id" value="{{search.development_id}}" type="text"></div>
+    <div><label for="last_name">Last name:</label> <input class="last_name" id="last_name" name="last_name" value="{{search.last_name}}" type="text"></div>
+    <div><label for="first_name">First name:</label> <input class="first_name" id="first_name" name="first_name" value="{{search.first_name}}" type="text"></div>
+    <div><label for="changed_since_date">Changed since date:</label> <input class="changed_since_date" id="changed_since_date" name="changed_since_date" value="{{search.changed_since_date}}" size="15" type="text"></div>
+    <div>
+        <br>
+        Select an eduPersonAffiliation (ePA) filter to NARROW results.  Uncheck all for broadest search results.<br>
+        See also: PWS Developer documentation for more info on appropriate use of ePA search filters and <a href="http://www.washington.edu/computing/eds/edupersonaffiliation.html">EduPerson Affiliation Reference</a> for ePA value definitions.
+        <br><br>
+    </div>
+    <div>
+        eduPersonAffiliation:
+        <label for="edupersonaffiliation_student">Student:</label><input name="edupersonaffiliation_student" class="edupersonaffiliation" id="edupersonaffiliation_student" value="true"{% if search.edupersonaffiliation_student == "true" %} checked="checked"{% endif %} type="checkbox">
+        <label for="edupersonaffiliation_staff">Staff:</label><input name="edupersonaffiliation_staff" class="edupersonaffiliation" id="edupersonaffiliation_staff" value="true"{% if search.edupersonaffiliation_staff == "true" %} checked="checked"{% endif %} type="checkbox">
+        <label for="edupersonaffiliation_faculty">Faculty:</label><input name="edupersonaffiliation_faculty" class="edupersonaffiliation" id="edupersonaffiliation_faculty" value="true"{% if search.edupersonaffiliation_faculty == "true" %} checked="checked"{% endif %} type="checkbox">
+        <label for="edupersonaffiliation_employee">Employee:</label><input name="edupersonaffiliation_employee" class="edupersonaffiliation" id="edupersonaffiliation_employee" value="true"{% if search.edupersonaffiliation_employee == "true" %} checked="checked"{% endif %} type="checkbox">
+        <label for="edupersonaffiliation_member">Member:</label><input name="edupersonaffiliation_member" class="edupersonaffiliation" id="edupersonaffiliation_member" value="true"{% if search.edupersonaffiliation_member == "true" %} checked="checked"{% endif %} type="checkbox">
+        <label for="edupersonaffiliation_alum">Alum:</label><input name="edupersonaffiliation_alum" class="edupersonaffiliation" id="edupersonaffiliation_alum" value="true"{% if search.edupersonaffiliation_alum == "true" %} checked="checked"{% endif %} type="checkbox">
+        <label for="edupersonaffiliation_affiliate">Affiliate:</label><input name="edupersonaffiliation_affiliate" class="edupersonaffiliation" id="edupersonaffiliation_affiliate" value="true"{% if search.edupersonaffiliation_affiliate == "true" %} checked="checked"{% endif %} type="checkbox">
+    </div><br>
+    <div>
+        <label for="page_size">Results per page (Max 500):</label> <select class="page_size" id="page_size" name="page_size">{% if search.page_size %}<option value="{{search.page_size}}" selected="selected">{{search.page_size}}</option>{% endif %}<option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="200">200</option></select>
+    </div><br>
+    <div><input value="Search" type="submit"></div>
+</form>

@@ -1,0 +1,11 @@
+<h1>Entity Search (Proxy)</h1>
+<form method="get" action="entity.json">
+    <div><label for="display_name">Display name:</label> <input class="display_name" id="display_name" name="display_name" value="{{search.display_name}}" size="50" type="text"></div>
+    <div><label for="is_test_entity">Is test entity:</label> <input class="is_test_entity" id="is_test_entity" name="is_test_entity" value="true"{% if search.is_test_entity == "true" %} checked="checked"{% endif %} type="checkbox"></div>
+    <div><label for="only_entities">Entities only:</label> <input class="only_entities" id="only_entities" name="only_entities" value="true"{% if search.only_entities == "true" %} checked="checked"{% endif %} type="checkbox"></div>
+    <div><label for="changed_since_date">Changed since date:</label> <input class="changed_since_date" id="changed_since_date" name="changed_since_date" value="{{search.changed_since_date}}" size="15" type="text"></div>
+    <div>
+        <label for="page_size">Results per page (Max 500):</label> <select class="page_size" id="page_size" name="page_size">{% if search.page_size %}<option value="{{search.page_size}}" selected="selected">{{search.page_size}}</option>{% endif %}<option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="200">200</option></select>
+    </div><br>
+    <div><input value="Search" type="submit"></div>
+</form>
