@@ -64,7 +64,8 @@ class ViewTest(TestCase):
 
     def test_2_simple(self):
         self_closed = '<div/><div id="1"/>'
-        valid = '<!-- <div/> --><div></div><!-- <div id="1"/> --><div id="1"></div>'
+        valid = ('<!-- <div/> --><div></div>'
+                 '<!-- <div id="1"/> --><div id="1"></div>')
 
         self.assertEquals(valid, clean_self_closing_divs(self_closed))
 
