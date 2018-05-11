@@ -191,7 +191,8 @@ def format_html(service, content):
 
 def clean_self_closing_divs(content):
     cleaned = re.sub(r"((<div[^>]*?)/>)",
-                     r"<!-- \g<1> -->\g<2>></div>", content)
+                     r"<!-- \g<1> -->\g<2>></div>",
+                     content)
     return cleaned
 
 
