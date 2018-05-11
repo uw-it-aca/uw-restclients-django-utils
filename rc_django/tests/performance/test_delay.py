@@ -11,7 +11,6 @@ from rc_django.views import errors
 from rc_django.middleware import EnableServiceDegradationMiddleware
 from rc_django.tests.test_views import missing_url
 import time
-from rc_django.tests import is_admin
 
 
 class DELAY_DAO(DAO):
@@ -33,7 +32,8 @@ class Backend(MockDAO):
 
 class DegradedTestCase(TestCase):
 
-    @override_settings(RC_DJANGO_ADMIN_AUTH_MODULE='rc_django.tests.is_admin')
+    @override_settings(
+        RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
     def test_degraded(self):
         r1 = RequestFactory().post(reverse("restclients_errors"), {
             "new_service_name": "delay",

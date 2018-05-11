@@ -12,7 +12,6 @@ from rc_django.views import (
     proxy, clean_self_closing_divs, format_json, get_dao_instance)
 from userservice.user import UserServiceMiddleware
 from unittest import skipIf
-from rc_django.tests import is_admin
 
 
 class TEST_DAO(DAO):
@@ -57,7 +56,8 @@ def get_user_pass(username):
     return 'pass'
 
 
-@override_settings(RC_DJANGO_ADMIN_AUTH_MODULE='rc_django.tests.is_admin')
+@override_settings(
+    RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
 class ViewTest(TestCase):
     def test_simple(self):
         self_closed = "<div/>"

@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader, RequestContext, TemplateDoesNotExist
@@ -8,9 +7,9 @@ from django.views.decorators.csrf import csrf_protect
 from importlib import import_module
 from restclients_core.dao import DAO
 from restclients_core.models import MockHTTP
+from rc_django.decorators import restclient_admin_required
 from rc_django.models import DegradePerformance
 from userservice.user import UserService
-from userservice.views import _get_module
 from time import time
 try:
     from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
@@ -20,31 +19,6 @@ except ImportError:
 from base64 import b64encode
 import json
 import re
-
-
-def is_admin():
-    print("%s %s" % ("Your app needs to defined the is_admin() function",
-                     "to check if the original user has the permission."))
-    print("Set RC_DJANGO_ADMIN_AUTH_MODULE to that in the settings.py")
-    return False
-
-
-def get_admin_auth_module():
-    if hasattr(settings, "RC_DJANGO_ADMIN_AUTH_MODULE"):
-        return _get_module(settings.RC_DJANGO_ADMIN_AUTH_MODULE)
-    else:
-        return is_admin
-
-
-def require_admin(view_func):
-    def wrapper(*args, **kwargs):
-        is_admin = get_admin_auth_module()
-        if not is_admin():
-            return HttpResponseRedirect("/")
-
-        return view_func(*args, **kwargs)
-
-    return wrapper
 
 
 def set_wrapper_template(context):
@@ -63,9 +37,8 @@ def get_dao_instance(service):
     raise ImportError()
 
 
-@login_required
 @csrf_protect
-@require_admin
+@restclient_admin_required
 def proxy(request, service, url):
     user_service = UserService()
     actual_user = user_service.get_original_user()
@@ -222,9 +195,8 @@ def clean_self_closing_divs(content):
     return cleaned
 
 
-@login_required
 @csrf_protect
-@require_admin
+@restclient_admin_required
 def errors(request):
     context = {}
     context["errors"] = []
