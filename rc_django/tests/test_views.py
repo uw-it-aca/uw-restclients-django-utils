@@ -56,6 +56,18 @@ def get_user_pass(username):
     return 'pass'
 
 
+class ViewNoAuthTest(TestCase):
+    def test_service_errors(self):
+        get_user('test_view')
+        self.client.login(
+            username='test_view', password=get_user_pass('test_view'))
+
+        # No auth module in settings
+        url = reverse("restclients_proxy", args=["test", "/test/v1"])
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 401)
+
+
 @override_settings(
     RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
 class ViewTest(TestCase):
