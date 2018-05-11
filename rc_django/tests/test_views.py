@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase, RequestFactory
 from django.conf import settings
+from django.test.utils import override_settings
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.models import User
@@ -11,6 +12,7 @@ from rc_django.views import (
     proxy, clean_self_closing_divs, format_json, get_dao_instance)
 from userservice.user import UserServiceMiddleware
 from unittest import skipIf
+from rc_django.tests import is_admin
 
 
 class TEST_DAO(DAO):
@@ -55,6 +57,7 @@ def get_user_pass(username):
     return 'pass'
 
 
+@override_settings(RC_DJANGO_ADMIN_AUTH_MODULE='rc_django.tests.is_admin')
 class ViewTest(TestCase):
     def test_simple(self):
         self_closed = "<div/>"

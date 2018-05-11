@@ -9,8 +9,8 @@ from importlib import import_module
 from restclients_core.dao import DAO
 from restclients_core.models import MockHTTP
 from rc_django.models import DegradePerformance
-from authz_group import Group
 from userservice.user import UserService
+from userservice.views import _get_module
 from time import time
 try:
     from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
@@ -22,21 +22,24 @@ import json
 import re
 
 
+def is_admin():
+    print("%s %s" % ("Your app needs to defined the is_admin() function",
+                     "to check if the original user has the permission."))
+    print("Set RC_DJANGO_ADMIN_AUTH_MODULE to that in the settings.py")
+    return False
+
+
+def get_admin_auth_module():
+    if hasattr(settings, "RC_DJANGO_ADMIN_AUTH_MODULE"):
+        return _get_module(settings.RC_DJANGO_ADMIN_AUTH_MODULE)
+    else:
+        return is_admin
+
+
 def require_admin(view_func):
     def wrapper(*args, **kwargs):
-        if not hasattr(settings, "RESTCLIENTS_ADMIN_GROUP"):
-            print("You must have a group defined as your admin group. "
-                  "Configure that using RESTCLIENTS_ADMIN_GROUP='u_foo_bar'")
-            raise Exception("Missing RESTCLIENTS_ADMIN_GROUP in settings")
-
-        user_service = UserService()
-        actual_user = user_service.get_original_user()
-        g = Group()
-
-        is_admin = g.is_member_of_group(actual_user,
-                                        settings.RESTCLIENTS_ADMIN_GROUP)
-
-        if not is_admin:
+        is_admin = get_admin_auth_module()
+        if not is_admin():
             return HttpResponseRedirect("/")
 
         return view_func(*args, **kwargs)
