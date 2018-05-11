@@ -92,15 +92,11 @@ class ViewTest(TestCase):
                                                 email='fake@fake',
                                                 password='top_secret')
 
-        backend = "authz_group.authz_implementation.all_ok.AllOK"
-        with self.settings(RESTCLIENTS_ADMIN_GROUP="ok",
-                           AUTHZ_GROUP_BACKEND=backend):
+        # Add the testing DAO service
+        response = proxy(request, "test", "/fake/")
 
-            # Add the testing DAO service
-            response = proxy(request, "test", "/fake/")
-
-            # Test that the bad param doesn't cause a non-200 response
-            self.assertEquals(response.status_code, 200)
+        # Test that the bad param doesn't cause a non-200 response
+        self.assertEquals(response.status_code, 200)
 
     def test_format_json(self):
         service = 'pws'
@@ -132,6 +128,11 @@ class ViewTest(TestCase):
         get_user('test_view')
         self.client.login(
             username='test_view', password=get_user_pass('test_view'))
+
+        # Unauthorized service
+        url = reverse("restclients_proxy", args=["secret", "/test/v1"])
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 401)
 
         # Missing service
         url = reverse("restclients_proxy", args=["fake", "/test/v1"])

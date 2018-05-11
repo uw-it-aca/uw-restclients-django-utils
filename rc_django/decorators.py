@@ -4,7 +4,7 @@ from django.utils.module_loading import import_string
 from django.shortcuts import render
 
 
-def can_proxy_restclient(request, *args, **kwargs):
+def can_proxy_restclient(request, service, url):
     print("Your application should define an authorization function "
           "as RESTCLIENTS_ADMIN_AUTH_MODULE in settings.py.")
     return False
@@ -12,17 +12,20 @@ def can_proxy_restclient(request, *args, **kwargs):
 
 def restclient_admin_required(view_func):
     """
-    Calls login_required in case the user is not authenticated.
+    View decorator that checks whether the user is permitted to view proxy
+    restclients. Calls login_required in case the user is not authenticated.
     """
     def wrapper(request, *args, **kwargs):
-        try:
+        if hasattr(settings, 'RESTCLIENTS_ADMIN_AUTH_MODULE'):
             auth_func = import_string(settings.RESTCLIENTS_ADMIN_AUTH_MODULE)
-        except (KeyError, ImportError):
+        else:
             auth_func = can_proxy_restclient
 
-        if auth_func(request, *args, **kwargs):
+        service = args[0] if len(args) > 0 else None
+        url = args[1] if len(args) > 1 else None
+        if auth_func(request, service, url):
             return view_func(request, *args, **kwargs)
 
-        return render(request, 'rc_django/access_denied.html', status=401)
+        return render(request, 'access_denied.html', status=401)
 
     return login_required(function=wrapper)
