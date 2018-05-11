@@ -1,4 +1,5 @@
 from django.test import TestCase, RequestFactory
+from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.middleware import AuthenticationMiddleware
@@ -30,6 +31,9 @@ class Backend(MockDAO):
 
 
 class DegradedTestCase(TestCase):
+
+    @override_settings(
+        RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
     def test_degraded(self):
         r1 = RequestFactory().post(reverse("restclients_errors"), {
             "new_service_name": "delay",
