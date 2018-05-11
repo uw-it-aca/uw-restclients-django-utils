@@ -23,7 +23,7 @@ setup(
     author_email="aca-it@uw.edu",
     include_package_data=True,
     install_requires=[
-        'Django==1.11.10',
+        'Django>=1.11,<2.0',
         'UW-RestClients-Core>0.8',
         'django-userservice>=2.0,<3.0',
         'python-binary-memcached'
