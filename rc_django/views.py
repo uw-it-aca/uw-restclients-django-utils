@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader, RequestContext, TemplateDoesNotExist
@@ -8,8 +7,8 @@ from django.views.decorators.csrf import csrf_protect
 from importlib import import_module
 from restclients_core.dao import DAO
 from restclients_core.models import MockHTTP
+from rc_django.decorators import restclient_admin_required
 from rc_django.models import DegradePerformance
-from authz_group import Group
 from userservice.user import UserService
 from time import time
 try:
@@ -20,28 +19,6 @@ except ImportError:
 from base64 import b64encode
 import json
 import re
-
-
-def require_admin(view_func):
-    def wrapper(*args, **kwargs):
-        if not hasattr(settings, "RESTCLIENTS_ADMIN_GROUP"):
-            print("You must have a group defined as your admin group. "
-                  "Configure that using RESTCLIENTS_ADMIN_GROUP='u_foo_bar'")
-            raise Exception("Missing RESTCLIENTS_ADMIN_GROUP in settings")
-
-        user_service = UserService()
-        actual_user = user_service.get_original_user()
-        g = Group()
-
-        is_admin = g.is_member_of_group(actual_user,
-                                        settings.RESTCLIENTS_ADMIN_GROUP)
-
-        if not is_admin:
-            return HttpResponseRedirect("/")
-
-        return view_func(*args, **kwargs)
-
-    return wrapper
 
 
 def set_wrapper_template(context):
@@ -60,9 +37,8 @@ def get_dao_instance(service):
     raise ImportError()
 
 
-@login_required
 @csrf_protect
-@require_admin
+@restclient_admin_required
 def proxy(request, service, url):
     user_service = UserService()
     actual_user = user_service.get_original_user()
@@ -220,9 +196,8 @@ def clean_self_closing_divs(content):
     return cleaned
 
 
-@login_required
 @csrf_protect
-@require_admin
+@restclient_admin_required
 def errors(request):
     context = {}
     context["errors"] = []

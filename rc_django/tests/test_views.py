@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase, RequestFactory
 from django.conf import settings
+from django.test.utils import override_settings
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.models import User
@@ -55,6 +56,20 @@ def get_user_pass(username):
     return 'pass'
 
 
+class ViewNoAuthTest(TestCase):
+    def test_service_errors(self):
+        get_user('test_view')
+        self.client.login(
+            username='test_view', password=get_user_pass('test_view'))
+
+        # No auth module in settings
+        url = reverse("restclients_proxy", args=["test", "/test/v1"])
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 401)
+
+
+@override_settings(
+    RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
 class ViewTest(TestCase):
     def test_simple(self):
         self_closed = "<div/>"
@@ -90,15 +105,11 @@ class ViewTest(TestCase):
                                                 email='fake@fake',
                                                 password='top_secret')
 
-        backend = "authz_group.authz_implementation.all_ok.AllOK"
-        with self.settings(RESTCLIENTS_ADMIN_GROUP="ok",
-                           AUTHZ_GROUP_BACKEND=backend):
+        # Add the testing DAO service
+        response = proxy(request, "test", "/fake/")
 
-            # Add the testing DAO service
-            response = proxy(request, "test", "/fake/")
-
-            # Test that the bad param doesn't cause a non-200 response
-            self.assertEquals(response.status_code, 200)
+        # Test that the bad param doesn't cause a non-200 response
+        self.assertEquals(response.status_code, 200)
 
     def test_format_json(self):
         service = 'pws'
@@ -130,6 +141,11 @@ class ViewTest(TestCase):
         get_user('test_view')
         self.client.login(
             username='test_view', password=get_user_pass('test_view'))
+
+        # Unauthorized service
+        url = reverse("restclients_proxy", args=["secret", "/test/v1"])
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 401)
 
         # Missing service
         url = reverse("restclients_proxy", args=["fake", "/test/v1"])
