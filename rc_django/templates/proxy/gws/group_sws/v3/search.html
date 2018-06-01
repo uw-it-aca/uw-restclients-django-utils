@@ -1,28 +1,26 @@
 <h1>Search Groups (Proxy)</h1>
 <form method="get" action="search.json">
     <div>
-        <p>
         <label for="name">Group name or id ("*" is wildcard):</label>
         <input name="name" id="name" type="text" value="{{search.name}}" size="50">
-        </p><p>
+    </div><div>
         <label for="member">Member UW NetID or ePPN:</label>
         <input name="member" id="member" type="text" value="{{search.member}}" size="32">
-        </p><p>
+    </div><div>
         <label for="type">Membership type:</label>
         <select id="type" name="type">
             <option value="direct"{% if search.type == "direct" %} selected="selected"{% endif %}>Direct</option>
             <option value="effective"{% if search.type == "effective" %} selected="selected"{% endif %}>Effective</option>
         </select>
-        </p><p>
+    </div><div>
         <label for="stem">Group Stem:</label>
         <input name="stem" id="stem" type="text" value="{{search.stem}}" size="64">
-        </p><p>
+    </div><div>
         <select id="scope" name="scope">
             <option value="all"{% if search.scope == "all" %} selected="selected"{% endif %}>All</option>
             <option value="one"{% if search.scope == "one" %} selected="selected"{% endif %}>One level</option>
         </select>
-        </p><p>
+    </div><div>
         <input value="Search" type="submit">
-        </p>
     </div>
 </form>
