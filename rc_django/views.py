@@ -48,6 +48,7 @@ def proxy(request, service, url):
     headers = {}
 
     if service == "iasystem":
+        headers["Accept"] = "application/vnd.collection+json"
         if url.endswith('/evaluation'):
             index = url.find('/')
             if index > -1:
