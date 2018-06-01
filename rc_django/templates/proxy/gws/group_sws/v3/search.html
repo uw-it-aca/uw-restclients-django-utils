@@ -12,15 +12,19 @@
             <option value="direct"{% if search.type == "direct" %} selected="selected"{% endif %}>Direct</option>
             <option value="effective"{% if search.type == "effective" %} selected="selected"{% endif %}>Effective</option>
         </select>
-    </div><div>
+    </div>
+    <div>
         <label for="stem">Group Stem:</label>
         <input name="stem" id="stem" type="text" value="{{search.stem}}" size="64">
-    </div><div>
+    </div>
+    <div>
+        <label for="scope">Scope:</label>
         <select id="scope" name="scope">
             <option value="all"{% if search.scope == "all" %} selected="selected"{% endif %}>All</option>
             <option value="one"{% if search.scope == "one" %} selected="selected"{% endif %}>One level</option>
         </select>
-    </div><div>
+    </div>
+    <div>
         <input value="Search" type="submit">
     </div>
 </form>
