@@ -113,10 +113,10 @@ class ViewTest(TestCase):
 
     def test_format_json(self):
         service = 'pws'
-        json_data = '{"Href": "/identity/v1/entity.json"}'
+        json_data = '{"Href": "/identity/v2/entity.json"}'
         formatted = (u'{<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;"Href":&nbsp;'
-                     u'"<a href="/view/pws/identity/v1/entity.json">'
-                     u'/identity/v1/entity.json</a>"<br/>\n}')
+                     u'"<a href="/view/pws/identity/v2/entity.json">'
+                     u'/identity/v2/entity.json</a>"<br/>\n}')
         self.assertEquals(formatted, format_json(service, json_data))
 
         json_data = '{"Decimal": 5.678}'

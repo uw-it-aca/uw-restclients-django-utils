@@ -80,6 +80,12 @@ def proxy(request, service, url):
     try:
         if service == "iasystem" and subdomain is not None:
             response = dao.getURL(url, headers, subdomain)
+
+        elif service == "gws":
+            url = "/group_sws/v3/search?member=%s&stem=%s&scope=all" % (
+                request.GET["netid"], request.GET["stem"])
+            response = dao.getURL(url, headers)
+
         else:
             if service == "libcurrics":
                 if "?campus=" in url:
