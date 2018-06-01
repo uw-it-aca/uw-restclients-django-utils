@@ -51,7 +51,7 @@ def proxy(request, service, url):
     except (AttributeError, ImportError):
         return HttpResponse("Missing service: %s" % service, status=404)
 
-    if service == "sws":
+    if service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
     elif service == "iasystem":
         headers = {"Accept": "application/vnd.collection+json"}
@@ -80,13 +80,6 @@ def proxy(request, service, url):
     try:
         if service == "iasystem" and subdomain is not None:
             response = dao.getURL(url, headers, subdomain)
-
-        elif service == "gws":
-            url = "/group_sws/v3/search?member=%s&stem=%s&scope=%s" % (
-                request.GET["member"],
-                request.GET["stem"],
-                request.GET["scope"])
-            response = dao.getURL(url, headers)
 
         else:
             if service == "libcurrics":
@@ -151,7 +144,7 @@ def proxy(request, service, url):
     set_wrapper_template(context)
 
     try:
-        search_template_path = re.sub(r"\..*$", "", url)
+        search_template_path = re.sub(r"[.?].*$", "", url)
         search_template = "proxy/%s%s.html" % (service, search_template_path)
         loader.get_template(search_template)
         context["search_template"] = search_template
