@@ -3,11 +3,27 @@
     <h3>Search by name or id ("*" is wildcard)</h3>
     <div><label for="name">Group name:</label> <input name="name" id="name" type="text" value="{{search.name}}" size="50"> <input value="Search" type="submit"></div>
 </form>
+
 <form method="get" action="search.json">
     <h3>Search by stem</h3>
     <div><label for="stem">Group stem:</label> <input name="stem" id="stem" type="text" value="{{search.stem}}" size="50"> <label for="scope">Scope:</label> <select id="scope" name="scope"><option value="all"{% if search.scope == "all" %} selected="selected"{% endif %}>All groups</option><option value="one"{% if search.scope == "one" %} selected="selected"{% endif %}>One level only</option></select> <input value="Search" type="submit"></div>
 </form>
+
 <form method="get" action="search.json">
     <h3>Search by member</h3>
     <div><label for="member">UW NetID:</label> <input name="member" id="member" type="text" value="{{search.member}}" size="50"> <label for="type">Membership type:</label> <select id="type" name="type"><option value="direct"{% if search.scope == "direct" %} selected="selected"{% endif %}>Direct</option><option value="effective"{% if search.scope == "effective" %} selected="selected"{% endif %}>Effective</option></select><input value="Search" type="submit"></div>
+</form>
+
+<form method="get" action="search.json">
+    <h3>Find Groups by Member</h3>
+    <div>
+        <label for="member">UW NetID:</label>
+        <input name="member" id="member" type="text" value="{{search.member}}" size="32">
+        <label for="stem">Group Stem:</label>
+        <input name="stem" id="stem" type="text" value="{{search.stem}}" size="64">
+        <select id="scope" name="scope">
+            <option value="all"{% if search.scope == "all" %} selected="selected"{% endif %}>All</option>
+            <option value="one"{% if search.scope == "one" %} selected="selected"{% endif %}>One</option>
+        </select>
+        <input value="Search" type="submit"></div>
 </form>
