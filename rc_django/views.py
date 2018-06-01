@@ -75,24 +75,20 @@ def proxy(request, service, url):
 
     start = time()
     try:
-        if re.match(r'^iasystem_', service):
-            headers = {"Accept": "application/vnd.collection+json"}
-            response = dao.getURL(url, headers)
-        else:
-            if service == "libcurrics":
-                if "?campus=" in url:
-                    url = url.replace("?campus=", "/")
-                elif "course?" in url:
-                    url_prefix = re.sub(r'\?.*$', "", url)
-                    url = "%s/%s/%s/%s/%s/%s" % (
-                        url_prefix,
-                        request.GET["year"],
-                        request.GET["quarter"],
-                        request.GET["curriculum_abbr"].replace(" ", "%20"),
-                        request.GET["course_number"],
-                        request.GET["section_id"])
+        if service == "libcurrics":
+            if "?campus=" in url:
+                url = url.replace("?campus=", "/")
+            elif "course?" in url:
+                url_prefix = re.sub(r'\?.*$', "", url)
+                url = "%s/%s/%s/%s/%s/%s" % (
+                    url_prefix,
+                    request.GET["year"],
+                    request.GET["quarter"],
+                    request.GET["curriculum_abbr"].replace(" ", "%20"),
+                    request.GET["course_number"],
+                    request.GET["section_id"])
 
-            response = dao.getURL(url, headers)
+        response = dao.getURL(url, headers)
     except Exception as ex:
         response = MockHTTP()
         response.status = 500
