@@ -1,3 +1,4 @@
+import re
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -46,6 +47,13 @@ def proxy(request, service, url):
     use_pre = False
     headers = {}
 
+    if service == "iasystem":
+        if url.endswith('/evaluation'):
+            index = url.find('/')
+            if index > -1:
+                service = 'iasystem_' + url[:index].replace("_", "-")
+                index += 1
+                url = url[index:]
     try:
         dao = get_dao_instance(service)
     except (AttributeError, ImportError):
@@ -53,17 +61,6 @@ def proxy(request, service, url):
 
     if service == "sws":
         headers["X-UW-Act-as"] = actual_user
-    elif service == "iasystem":
-        headers = {"Accept": "application/vnd.collection+json"}
-        subdomain = None
-        if url.endswith('/evaluation'):
-            if url.startswith('uwb/') or url.startswith('uwt/'):
-                subdomain = url[:3]
-                url = url[4:]
-            else:
-                subdomain = url[:2]
-                url = url[3:]
-
     elif service == "calendar":
         use_pre = True
 
@@ -78,14 +75,8 @@ def proxy(request, service, url):
 
     start = time()
     try:
-        if service == "iasystem" and subdomain is not None:
-            response = dao.getURL(url, headers, subdomain)
-
-        elif service == "gws":
-            url = "/group_sws/v3/search?member=%s&stem=%s&scope=%s" % (
-                request.GET["member"],
-                request.GET["stem"],
-                request.GET["scope"])
+        if re.match(r'^iasystem_', service):
+            headers = {"Accept": "application/vnd.collection+json"}
             response = dao.getURL(url, headers)
 
         else:
