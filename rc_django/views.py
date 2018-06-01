@@ -47,14 +47,15 @@ def proxy(request, service, url):
     use_pre = False
     headers = {}
 
-    if service == "iasystem":
+    if re.match(r'^iasystem', service):
         headers["Accept"] = "application/vnd.collection+json"
-        if url.endswith('/evaluation'):
-            index = url.find('/')
-            if index > -1:
-                service = 'iasystem_' + url[:index].replace("_", "-")
-                index += 1
-                url = url[index:]
+        index = url.find('/')
+        if not url.endswith('/evaluation') or index == -1:
+            service = 'iasystem_uw'
+        else:
+            service = 'iasystem_' + url[:index].replace("_", "-")
+            index += 1
+            url = url[index:]
     try:
         dao = get_dao_instance(service)
     except (AttributeError, ImportError):
