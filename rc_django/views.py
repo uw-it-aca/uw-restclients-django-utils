@@ -82,8 +82,10 @@ def proxy(request, service, url):
             response = dao.getURL(url, headers, subdomain)
 
         elif service == "gws":
-            url = "/group_sws/v3/search?member=%s&stem=%s&scope=all" % (
-                request.GET["netid"], request.GET["stem"])
+            url = "/group_sws/v3/search?member=%s&stem=%s&scope=%s" % (
+                request.GET["member"],
+                request.GET["stem"],
+                request.GET["scope"])
             response = dao.getURL(url, headers)
 
         else:
