@@ -1,3 +1,4 @@
+import re
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -46,6 +47,14 @@ def proxy(request, service, url):
     use_pre = False
     headers = {}
 
+    if service == "iasystem":
+        headers["Accept"] = "application/vnd.collection+json"
+        if url.endswith('/evaluation'):
+            index = url.find('/')
+            if index > -1:
+                service = 'iasystem_' + url[:index].replace("_", "-")
+                index += 1
+                url = url[index:]
     try:
         dao = get_dao_instance(service)
     except (AttributeError, ImportError):
@@ -53,17 +62,6 @@ def proxy(request, service, url):
 
     if service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
-    elif service == "iasystem":
-        headers = {"Accept": "application/vnd.collection+json"}
-        subdomain = None
-        if url.endswith('/evaluation'):
-            if url.startswith('uwb/') or url.startswith('uwt/'):
-                subdomain = url[:3]
-                url = url[4:]
-            else:
-                subdomain = url[:2]
-                url = url[3:]
-
     elif service == "calendar":
         use_pre = True
 
@@ -78,24 +76,20 @@ def proxy(request, service, url):
 
     start = time()
     try:
-        if service == "iasystem" and subdomain is not None:
-            response = dao.getURL(url, headers, subdomain)
+        if service == "libcurrics":
+            if "?campus=" in url:
+                url = url.replace("?campus=", "/")
+            elif "course?" in url:
+                url_prefix = re.sub(r'\?.*$', "", url)
+                url = "%s/%s/%s/%s/%s/%s" % (
+                    url_prefix,
+                    request.GET["year"],
+                    request.GET["quarter"],
+                    request.GET["curriculum_abbr"].replace(" ", "%20"),
+                    request.GET["course_number"],
+                    request.GET["section_id"])
 
-        else:
-            if service == "libcurrics":
-                if "?campus=" in url:
-                    url = url.replace("?campus=", "/")
-                elif "course?" in url:
-                    url_prefix = re.sub(r'\?.*$', "", url)
-                    url = "%s/%s/%s/%s/%s/%s" % (
-                        url_prefix,
-                        request.GET["year"],
-                        request.GET["quarter"],
-                        request.GET["curriculum_abbr"].replace(" ", "%20"),
-                        request.GET["course_number"],
-                        request.GET["section_id"])
-
-            response = dao.getURL(url, headers)
+        response = dao.getURL(url, headers)
     except Exception as ex:
         response = MockHTTP()
         response.status = 500
