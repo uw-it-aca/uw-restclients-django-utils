@@ -37,25 +37,7 @@ def get_dao_instance(service):
             return dao
     raise ImportError()
 
-
-@csrf_protect
-@restclient_admin_required
-def proxy(request, service, url):
-    user_service = UserService()
-    actual_user = user_service.get_original_user()
-
-    use_pre = False
-    headers = {}
-
-    if re.match(r'^iasystem', service):
-        headers["Accept"] = "application/vnd.collection+json"
-        index = url.find('/')
-        if not url.endswith('/evaluation') or index == -1:
-            service = 'iasystem_uw'
-        else:
-            service = 'iasystem_' + url[:index].replace("_", "-")
-            index += 1
-            url = url[index:]
+def get_response(request, service, url, headers):
     try:
         dao = get_dao_instance(service)
     except (AttributeError, ImportError):
@@ -89,14 +71,45 @@ def proxy(request, service, url):
                     request.GET["curriculum_abbr"].replace(" ", "%20"),
                     request.GET["course_number"],
                     request.GET["section_id"])
-
         response = dao.getURL(url, headers)
     except Exception as ex:
-        response = MockHTTP()
-        response.status = 500
-        response.data = str(ex)
-
+        response = get_mock_response(ex)
     end = time()
+    return response, start, end
+
+
+def get_mock_response(ex):
+    response = MockHTTP()
+    response.status = 500
+    response.data = str(ex)
+    return response
+
+
+@csrf_protect
+@restclient_admin_required
+def proxy(request, service, url):
+    user_service = UserService()
+    actual_user = user_service.get_original_user()
+
+    use_pre = False
+    headers = {}
+
+    if re.match(r'^iasystem', service):
+        if url.endswith('/evaluation'):
+            index = url.find('/')
+            service = 'iasystem_' + url[:index].replace("_", "-")
+            index += 1
+            url = url[index:]
+            headers["Accept"] = "application/vnd.collection+json"
+        else:
+            url = "/" + url
+
+    if service == "iasystem":
+        response, start, end = get_response(request, "iasystem_uw",
+                                            url, headers)
+    else:
+        response, start, end = get_response(request, service,
+                                            url, headers)
 
     # First, check for known images
     is_image = False
@@ -127,7 +140,7 @@ def proxy(request, service, url):
         "use_pre": use_pre,
         "is_image": is_image,
         "base_64": base_64,
-    }
+        }
 
     try:
         loader.get_template("restclients/extra_info.html")
