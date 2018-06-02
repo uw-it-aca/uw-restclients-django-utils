@@ -37,6 +37,7 @@ def get_dao_instance(service):
             return dao
     raise ImportError()
 
+
 def get_response(request, service, url, headers):
     try:
         dao = get_dao_instance(service)
