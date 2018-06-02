@@ -38,26 +38,7 @@ def get_dao_instance(service):
     raise ImportError()
 
 
-def get_response(request, service, url, headers):
-    try:
-        dao = get_dao_instance(service)
-    except (AttributeError, ImportError):
-        return HttpResponse("Missing service: %s" % service, status=404)
-
-    if service == "sws" or service == "gws":
-        headers["X-UW-Act-as"] = actual_user
-    elif service == "calendar":
-        use_pre = True
-
-    url = "/%s" % quote(url)
-
-    if request.GET:
-        try:
-            url = "%s?%s" % (url, urlencode(request.GET))
-        except UnicodeEncodeError as err:
-            return HttpResponse(
-                'Bad URL param given to the restclients browser')
-
+def get_response(request, service, url, headers, dao):
     start = time()
     try:
         if service == "libcurrics":
@@ -105,12 +86,28 @@ def proxy(request, service, url):
         else:
             url = "/" + url
 
-    if service == "iasystem":
-        response, start, end = get_response(request, "iasystem_uw",
-                                            url, headers)
-    else:
-        response, start, end = get_response(request, service,
-                                            url, headers)
+    try:
+        dao = get_dao_instance(
+            "iasystem_uw" if service == "iasystem" else service)
+    except (AttributeError, ImportError):
+        return HttpResponse("Missing service: %s" % service,
+                            status=404)
+
+    if service == "sws" or service == "gws":
+        headers["X-UW-Act-as"] = actual_user
+    elif service == "calendar":
+        use_pre = True
+
+    url = "/%s" % quote(url)
+
+    if request.GET:
+        try:
+            url = "%s?%s" % (url, urlencode(request.GET))
+        except UnicodeEncodeError as err:
+            return HttpResponse(
+                'Bad URL param given to the restclients browser')
+
+    response, start, end = get_response(request, service, url, headers, dao)
 
     # First, check for known images
     is_image = False
