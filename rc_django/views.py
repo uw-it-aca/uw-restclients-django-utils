@@ -114,24 +114,22 @@ def proxy(request, service, url):
 
     response, start, end = get_response(request, service, url, headers, dao)
 
-    # First, check for known images
     is_image = False
     base_64 = None
-    # Assume json, and try to format it.
+    json_data = None
+    content = response.data
+
     if response.status == 200:
         try:
             if url.find('/idcard/v1/photo') == 0:
                 is_image = True
                 base_64 = b64encode(response.data)
-            if not use_pre:
+            elif not use_pre:
+                # Assume json, and try to format it.
                 content = format_json(service, response.data)
                 json_data = response.data
-            else:
-                content = response.data
-                json_data = None
         except ValueError:
             content = format_html(service, response.data)
-            json_data = None
 
     context = {
         "url": unquote(url),
