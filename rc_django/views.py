@@ -1,4 +1,7 @@
 import re
+import json
+import logging
+import traceback
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -19,8 +22,9 @@ except ImportError:
     from urllib import quote, unquote, urlencode
     from urlparse import urlparse, parse_qs
 from base64 import b64encode
-import json
-import re
+
+
+logger = logging.getLogger(__name__)
 
 
 def set_wrapper_template(context):
@@ -44,6 +48,7 @@ def get_response(request, service, url, headers, dao):
     try:
         response = dao.getURL(url, headers)
     except DataFailureException as ex:
+        logger.error(ex)
         response = get_mock_response(ex)
     end = time()
     return response, start, end
@@ -73,8 +78,8 @@ def proxy(request, service, url):
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
         else:
-            service = 'iasystem_uw'
-            url = "/" + url
+            if url == "index.html":
+                service = 'iasystem_uw'
     elif service == "libcurrics":
             if "?campus=" in url:
                 url = url.replace("?campus=", "/")
