@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_protect
 from importlib import import_module
 from restclients_core.dao import DAO
 from restclients_core.models import MockHTTP
+from restclients_core.exceptions import DataFailureException
 from rc_django.decorators import restclient_admin_required
 from rc_django.models import DegradePerformance
 from userservice.user import UserService
@@ -38,6 +39,23 @@ def get_dao_instance(service):
     raise ImportError()
 
 
+def get_response(request, service, url, headers, dao):
+    start = time()
+    try:
+        response = dao.getURL(url, headers)
+    except DataFailureException as ex:
+        response = get_mock_response(ex)
+    end = time()
+    return response, start, end
+
+
+def get_mock_response(ex):
+    response = MockHTTP()
+    response.status = ex.status
+    response.data = ex.msg
+    return response
+
+
 @csrf_protect
 @restclient_admin_required
 def proxy(request, service, url):
@@ -48,23 +66,37 @@ def proxy(request, service, url):
     headers = {}
 
     if re.match(r'^iasystem', service):
-        headers["Accept"] = "application/vnd.collection+json"
-        index = url.find('/')
-        if not url.endswith('/evaluation') or index == -1:
-            service = 'iasystem_uw'
-        else:
+        if url.endswith('/evaluation'):
+            index = url.find('/')
             service = 'iasystem_' + url[:index].replace("_", "-")
             index += 1
             url = url[index:]
-    try:
-        dao = get_dao_instance(service)
-    except (AttributeError, ImportError):
-        return HttpResponse("Missing service: %s" % service, status=404)
-
-    if service == "sws" or service == "gws":
+            headers["Accept"] = "application/vnd.collection+json"
+        else:
+            service = 'iasystem_uw'
+            url = "/" + url
+    elif service == "libcurrics":
+            if "?campus=" in url:
+                url = url.replace("?campus=", "/")
+            elif "course?" in url:
+                url_prefix = re.sub(r'\?.*$', "", url)
+                url = "%s/%s/%s/%s/%s/%s" % (
+                    url_prefix,
+                    request.GET["year"],
+                    request.GET["quarter"],
+                    request.GET["curriculum_abbr"],
+                    request.GET["course_number"],
+                    request.GET["section_id"])
+    elif service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
     elif service == "calendar":
         use_pre = True
+
+    try:
+        dao = get_dao_instance(service)
+    except (AttributeError, ImportError):
+        return HttpResponse("Missing service: %s" % service,
+                            status=404)
 
     url = "/%s" % quote(url)
 
@@ -75,46 +107,26 @@ def proxy(request, service, url):
             return HttpResponse(
                 'Bad URL param given to the restclients browser')
 
-    start = time()
-    try:
-        if service == "libcurrics":
-            if "?campus=" in url:
-                url = url.replace("?campus=", "/")
-            elif "course?" in url:
-                url_prefix = re.sub(r'\?.*$', "", url)
-                url = "%s/%s/%s/%s/%s/%s" % (
-                    url_prefix,
-                    request.GET["year"],
-                    request.GET["quarter"],
-                    request.GET["curriculum_abbr"].replace(" ", "%20"),
-                    request.GET["course_number"],
-                    request.GET["section_id"])
-
-        response = dao.getURL(url, headers)
-    except Exception as ex:
-        response = MockHTTP()
-        response.status = 500
-        response.data = str(ex)
-
-    end = time()
+    response, start, end = get_response(request, service, url, headers, dao)
 
     # First, check for known images
     is_image = False
     base_64 = None
     # Assume json, and try to format it.
-    try:
-        if url.find('/idcard/v1/photo') == 0:
-            is_image = True
-            base_64 = b64encode(response.data)
-        if not use_pre:
-            content = format_json(service, response.data)
-            json_data = response.data
-        else:
-            content = response.data
+    if response.status == 200:
+        try:
+            if url.find('/idcard/v1/photo') == 0:
+                is_image = True
+                base_64 = b64encode(response.data)
+            if not use_pre:
+                content = format_json(service, response.data)
+                json_data = response.data
+            else:
+                content = response.data
+                json_data = None
+        except ValueError:
+            content = format_html(service, response.data)
             json_data = None
-    except ValueError:
-        content = format_html(service, response.data)
-        json_data = None
 
     context = {
         "url": unquote(url),

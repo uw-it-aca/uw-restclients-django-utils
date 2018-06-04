@@ -1,4 +1,3 @@
-<h1>Iasystem Search (Proxy)</h1>
 <form method="get" action="evaluation">
 <div>
     <p>
@@ -24,21 +23,15 @@
     </p>
     <p>
     <label for="year">Year:</label>
-    <select id="year" name="year" value="{{search.year}}">
-        <option value="2013">2013</option>
-        <option value="2014">2014</option>
-        <option value="2015">2015</option>
-        <option value="2016">2016</option>
-        <option value="2016">2017</option>
-        <option value="2016">2018</option>
-        <option value="2016">2019</option>
-        <option value="2016">2020</option>
-    </select>
+    <input class="" id="year" name="year" value="{{search.year}}" size="4">
     </p>
     <p>
-    <input class="" id="instructor_id" name="instructor_id" value="{{search.instructor_id}}" size="10" type="number">
+    <label for="instructor_id">Instructor Employee ID:</label>
+    <input class="" id="instructor_id" name="instructor_id" value="{{search.instructor_id}}" size="10">
+    </p>
+    <label for="student_id">Student Number:</label>
+    <input class="" id="student_id" name="student_id" value="{{search.student_id}}" size="10">
     </p>
     <input value="Search" type="submit">
-
 </div>
 </form>

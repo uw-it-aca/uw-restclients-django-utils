@@ -6,22 +6,21 @@
     </div><div>
         <label for="member">Member UW NetID or ePPN:</label>
         <input name="member" id="member" type="text" value="{{search.member}}" size="32">
-    </div><div>
-        <label for="type">Membership type:</label>
+        &nbsp;&nbsp;
+        <label for="type">Type:</label>
         <select id="type" name="type">
-            <option value="direct"{% if search.type == "direct" %} selected="selected"{% endif %}>Direct</option>
-            <option value="effective"{% if search.type == "effective" %} selected="selected"{% endif %}>Effective</option>
+            <option value="direct"{% if search.type == "direct" %} selected="selected"{% endif %}>Direct membership only</option>
+            <option value="effective"{% if search.type == "effective" %} selected="selected"{% endif %}>Effective membership</option>
         </select>
     </div>
     <div>
         <label for="stem">Group Stem:</label>
-        <input name="stem" id="stem" type="text" value="{{search.stem}}" size="64">
-    </div>
-    <div>
+        <input name="stem" id="stem" type="text" value="{{search.stem}}" size="40">
+        &nbsp;&nbsp;
         <label for="scope">Scope:</label>
         <select id="scope" name="scope">
-            <option value="all"{% if search.scope == "all" %} selected="selected"{% endif %}>All</option>
-            <option value="one"{% if search.scope == "one" %} selected="selected"{% endif %}>One level</option>
+            <option value="all"{% if search.scope == "all" %} selected="selected"{% endif %}>All levels</option>
+            <option value="one"{% if search.scope == "one" %} selected="selected"{% endif %}>One level only</option>
         </select>
     </div>
     <div>
