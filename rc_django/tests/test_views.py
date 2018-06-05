@@ -165,8 +165,7 @@ class ViewTest(TestCase):
 
     def test_get_dao_instance(self):
         self.assertEquals(type(get_dao_instance("test")), TEST_DAO)
-        self.assertEquals(type(get_dao_instance(
-            'test_sub', recurse_service="test")), SUB_DAO)
+        self.assertEquals(type(get_dao_instance('test_sub')), SUB_DAO)
 
         # Missing service
         self.assertRaises(ImportError, get_dao_instance, "fake")
