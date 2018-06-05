@@ -77,9 +77,6 @@ def proxy(request, service, url):
             index += 1
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
-        else:
-            if url == "index.html":
-                service = 'iasystem_uw'
     elif service == "libcurrics":
             if "?campus=" in url:
                 url = url.replace("?campus=", "/")
@@ -98,7 +95,10 @@ def proxy(request, service, url):
         use_pre = True
 
     try:
-        dao = get_dao_instance(service)
+        service_name = service
+        if service == 'iasystem':
+            service_name = 'iasystem_uw'
+        dao = get_dao_instance(service_name)
     except (AttributeError, ImportError):
         return HttpResponse("Missing service: %s" % service,
                             status=404)
