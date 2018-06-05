@@ -25,6 +25,7 @@ class TEST_DAO(DAO):
         if "DAO_CLASS" == key:
             return "rc_django.tests.test_views.Backend"
 
+
 class SUB_DAO(TEST_DAO):
     def __init__(self):
         super(SUB_DAO, self).__init__()
@@ -169,4 +170,3 @@ class ViewTest(TestCase):
 
         # Missing service
         self.assertRaises(ImportError, get_dao_instance, "fake")
-
