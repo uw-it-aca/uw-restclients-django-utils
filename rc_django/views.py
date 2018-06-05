@@ -35,13 +35,12 @@ def set_wrapper_template(context):
         context["wrapper_template"] = "proxy_wrapper.html"
 
 
-def __get_all_subclasses(cls):
-    return cls.__subclasses__() + [g for s in cls.__subclasses__()
-                                   for g in __get_all_subclasses(s)]
-
-
 def get_dao_instance(service):
-    for subclass in __get_all_subclasses(DAO):
+    def get_all_subclasses(base):
+        return base.__subclasses__() + [g for s in base.__subclasses__()
+                                        for g in get_all_subclasses(s)]
+
+    for subclass in get_all_subclasses(DAO):
         dao = subclass()
         if dao.service_name() == service:
             return dao
