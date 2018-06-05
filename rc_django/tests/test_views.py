@@ -15,12 +15,23 @@ from unittest import skipIf
 
 
 class TEST_DAO(DAO):
+    def __init__(self):
+        super(TEST_DAO, self).__init__()
+
     def service_name(self):
         return "test"
 
     def get_default_service_setting(self, key):
         if "DAO_CLASS" == key:
             return "rc_django.tests.test_views.Backend"
+
+
+class SUB_DAO(TEST_DAO):
+    def __init__(self):
+        super(SUB_DAO, self).__init__()
+
+    def service_name(self):
+        return "test_sub"
 
 
 class Backend(MockDAO):
@@ -154,6 +165,7 @@ class ViewTest(TestCase):
 
     def test_get_dao_instance(self):
         self.assertEquals(type(get_dao_instance("test")), TEST_DAO)
+        self.assertEquals(type(get_dao_instance('test_sub')), SUB_DAO)
 
         # Missing service
         self.assertRaises(ImportError, get_dao_instance, "fake")

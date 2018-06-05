@@ -36,7 +36,11 @@ def set_wrapper_template(context):
 
 
 def get_dao_instance(service):
-    for subclass in DAO.__subclasses__():
+    def get_all_subclasses(base):
+        return base.__subclasses__() + [g for s in base.__subclasses__()
+                                        for g in get_all_subclasses(s)]
+
+    for subclass in get_all_subclasses(DAO):
         dao = subclass()
         if dao.service_name() == service:
             return dao
