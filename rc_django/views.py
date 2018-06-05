@@ -44,7 +44,7 @@ def get_dao_instance(service,
         if service_name == service:
             return dao
         if recurse_service and recurse_service == service_name:
-            return get_dao_instance(service, dao_base=dao)
+            return get_dao_instance(service, dao_base=subclass)
     raise ImportError()
 
 
