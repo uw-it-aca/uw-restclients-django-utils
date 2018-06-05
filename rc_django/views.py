@@ -35,13 +35,16 @@ def set_wrapper_template(context):
         context["wrapper_template"] = "proxy_wrapper.html"
 
 
-def get_dao_instance(service, dao_base=DAO):
-    for subclass in dao_base.__subclasses__():
+def all_subclasses(cls):
+    return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                                   for g in all_subclasses(s)]
+
+
+def get_dao_instance(service):
+    for subclass in all_subclasses(DAO):
         dao = subclass()
-        service_name = dao.service_name()
-        if service_name == service:
+        if dao.service_name() == service:
             return dao
-        return get_dao_instance(service, dao_base=subclass)
     raise ImportError()
 
 
