@@ -36,7 +36,11 @@ def set_wrapper_template(context):
 
 
 def get_dao_instance(service):
-    for subclass in DAO.__subclasses__():
+    def get_all_subclasses(base):
+        return base.__subclasses__() + [g for s in base.__subclasses__()
+                                        for g in get_all_subclasses(s)]
+
+    for subclass in get_all_subclasses(DAO):
         dao = subclass()
         if dao.service_name() == service:
             return dao
@@ -77,9 +81,6 @@ def proxy(request, service, url):
             index += 1
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
-        else:
-            if url == "index.html":
-                service = 'iasystem_uw'
     elif service == "libcurrics":
             if "?campus=" in url:
                 url = url.replace("?campus=", "/")
@@ -98,7 +99,10 @@ def proxy(request, service, url):
         use_pre = True
 
     try:
-        dao = get_dao_instance(service)
+        service_name = service
+        if service == 'iasystem':
+            service_name = 'iasystem_uw'
+        dao = get_dao_instance(service_name)
     except (AttributeError, ImportError):
         return HttpResponse("Missing service: %s" % service,
                             status=404)
