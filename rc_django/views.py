@@ -35,11 +35,16 @@ def set_wrapper_template(context):
         context["wrapper_template"] = "proxy_wrapper.html"
 
 
-def get_dao_instance(service):
-    for subclass in DAO.__subclasses__():
+def get_dao_instance(service,
+                     dao_base=DAO,
+                     recurse_service=None):
+    for subclass in dao_base.__subclasses__():
         dao = subclass()
-        if dao.service_name() == service:
+        service_name = dao.service_name()
+        if service_name == service:
             return dao
+        if recurse_service and recurse_service == service_name:
+            return get_dao_instance(service, dao_base=dao)
     raise ImportError()
 
 
@@ -69,8 +74,10 @@ def proxy(request, service, url):
 
     use_pre = False
     headers = {}
+    recurse_sub_dao_service_name = None
 
     if re.match(r'^iasystem', service):
+        recurse_sub_dao_service_name = 'iasystem_uw'
         if url.endswith('/evaluation'):
             index = url.find('/')
             service = 'iasystem_' + url[:index].replace("_", "-")
@@ -98,7 +105,8 @@ def proxy(request, service, url):
         service_name = service
         if service == 'iasystem':
             service_name = 'iasystem_uw'
-        dao = get_dao_instance(service_name)
+        dao = get_dao_instance(
+            service_name, recurse_service=recurse_sub_dao_service_name)
     except (AttributeError, ImportError):
         return HttpResponse("Missing service: %s" % service,
                             status=404)
