@@ -123,15 +123,16 @@ def proxy(request, service, url):
     json_data = None
     content = response.data
 
-    if response.status == 200:
+    # Handle known images
+    if (response.status == 200 and
+            re.match(r'/idcard/v1/photo/[0-9A-F]{32}', url)):
+        is_image = True
+        base_64 = b64encode(response.data)
+    elif not use_pre:
         try:
-            if url.find('/idcard/v1/photo') == 0:
-                is_image = True
-                base_64 = b64encode(response.data)
-            elif not use_pre:
-                # Assume json, and try to format it.
-                content = format_json(service, response.data)
-                json_data = response.data
+            # Assume json, and try to format it.
+            content = format_json(service, response.data)
+            json_data = response.data
         except ValueError:
             content = format_html(service, response.data)
 
@@ -197,8 +198,11 @@ def format_json(service, content):
 
 
 def format_html(service, content):
+    base_url = reverse("restclients_proxy", args=["xx", "xx"])
+    base_url = base_url.replace('/xx/xx', '')
+
     formatted = re.sub(r"href\s*=\s*\"/(.*?)\"",
-                       r"href='/restclients/view/%s/\1'" % service, content)
+                       r'href="%s/%s/\1"' % (base_url, service), content)
     formatted = re.sub(re.compile(r"<style.*/style>", re.S), "", formatted)
     formatted = clean_self_closing_divs(formatted)
     return formatted
