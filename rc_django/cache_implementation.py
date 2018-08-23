@@ -219,7 +219,7 @@ class MemcachedCache(object):
         data = json.dumps({"status": response.status,
                            "b64_data": b64_data,
                            "headers": header_data,
-                           "time_stamp": timezone.now()})
+                           "time_stamp": str(timezone.now())})
 
         time_to_store = self.get_cache_expiration_time(service, url)
         key = self._get_key(service, url)
