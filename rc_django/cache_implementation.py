@@ -1,17 +1,19 @@
 """
 Contains DAO Cache implementations
 """
+
+import bmemcached
+import json
+from logging import getLogger
+import threading
+from base64 import b64encode, b64decode
+from datetime import datetime, timedelta
 from django.conf import settings
+from django.utils import timezone
 from django.utils.timezone import make_aware, get_current_timezone
 from restclients_core.cache_manager import store_cache_entry
 from restclients_core.models import MockHTTP
 from rc_django.models import CacheEntryTimed
-from datetime import datetime, timedelta
-from base64 import b64encode, b64decode
-from logging import getLogger
-import bmemcached
-import threading
-import json
 
 
 logger = getLogger(__name__)
@@ -216,7 +218,8 @@ class MemcachedCache(object):
         b64_data = b64encode(response.data)
         data = json.dumps({"status": response.status,
                            "b64_data": b64_data,
-                           "headers": header_data})
+                           "headers": header_data,
+                           "time_stamp": timezone.now()})
 
         time_to_store = self.get_cache_expiration_time(service, url)
         key = self._get_key(service, url)
