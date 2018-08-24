@@ -93,7 +93,7 @@ class MemcachedCache(object):
         header_data = {}
         for header in response.headers:
             header_data[header] = response.getheader(header)
-        
+
         key = self._get_key(service, url)
         cdata, time_to_store = self.__make_cache_data(service, url,
                                                       response.data,

@@ -92,14 +92,15 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response, None)
 
     def test_updateCache(self):
-        with self.settings(RESTCLIENTS_DAO_CACHE_CLASS=MEMCACHE,
-                           RESTCLIENTS_TEST_MEMCACHED=True,
-                           RESTCLIENTS_MEMCACHED_SERVERS=('localhost:11211', )):
+        with self.settings(
+                RESTCLIENTS_DAO_CACHE_CLASS=MEMCACHE,
+                RESTCLIENTS_TEST_MEMCACHED=True,
+                RESTCLIENTS_MEMCACHED_SERVERS=('localhost:11211', )):
             cache = MemcachedCache()
             c_entry = cache.getCache('mem', '/same', {})
             self.assertIsNone(c_entry)
 
             c_entry = cache.updateCache('mem', '/same',
-                                        json.dumps({"Updared": True}), 
+                                        json.dumps({"Updared": True}),
                                         timezone.now())
             c_entry = cache.getCache('mem', '/same', {})
