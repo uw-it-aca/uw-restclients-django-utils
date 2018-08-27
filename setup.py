@@ -26,7 +26,8 @@ setup(
         'Django>=1.11,<2.0',
         'UW-RestClients-Core>0.8',
         'django-userservice>=2.0.2,<3.0',
-        'python-binary-memcached'
+        'python-binary-memcached',
+        'python-dateutil'
     ],
     license='Apache License, Version 2.0',
     description=('UW-RestClients-Django-Utils'),
@@ -38,5 +39,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
+        # 'Programming Language :: Python :: 3.6',
     ],
 )

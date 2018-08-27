@@ -1,9 +1,14 @@
+import json
 from django.test import TestCase
 from django.conf import settings
+from django.utils import timezone
 from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
-from rc_django.cache_implementation import MemcachedCache
+from rc_django.cache_implementation.memcache import MemcachedCache
 from unittest import skipIf
+
+
+MEMCACHE = 'rc_django.cache_implementation.memcache.MemcachedCache'
 
 
 class MEM_DAO(DAO):
@@ -85,3 +90,17 @@ class MemcachedCacheTest(TestCase):
         url = "".join("Y" for i in range(300))
         response = cache.getCache('ok', url, {})
         self.assertEquals(response, None)
+
+    def test_updateCache(self):
+        with self.settings(
+                RESTCLIENTS_DAO_CACHE_CLASS=MEMCACHE,
+                RESTCLIENTS_TEST_MEMCACHED=True,
+                RESTCLIENTS_MEMCACHED_SERVERS=('localhost:11211', )):
+            cache = MemcachedCache()
+            c_entry = cache.getCache('mem', '/same', {})
+            self.assertIsNone(c_entry)
+
+            c_entry = cache.updateCache('mem', '/same',
+                                        json.dumps({"Updared": True}),
+                                        timezone.now())
+            c_entry = cache.getCache('mem', '/same', {})
