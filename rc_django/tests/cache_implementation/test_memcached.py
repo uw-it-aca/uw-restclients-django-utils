@@ -8,9 +8,6 @@ from rc_django.cache_implementation.memcache import MemcachedCache
 from unittest import skipIf
 
 
-MEMCACHE = 'rc_django.cache_implementation.memcache.MemcachedCache'
-
-
 class MEM_DAO(DAO):
     def service_name(self):
         return "mem"
@@ -35,9 +32,13 @@ class Backend(MockDAO):
         return response
 
 
+@skipIf(not getattr(settings, 'RESTCLIENTS_MEMCACHED_SERVERS', None),
+        "Memcached cache not configured")
 class MemcachedCacheTest(TestCase):
-    @skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
-            "Needs configuration to test memcached cache")
+    def setUp(self):
+        cache = MemcachedCache()
+        cache.client.flush_all()
+
     def test_memcached(self):
         cache = MemcachedCache()
         client = MEM_DAO()
@@ -54,8 +55,6 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, "Body Content")
 
-    @skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
-            "Needs configuration to test memcached cache")
     def test_memcached_404(self):
         cache = MemcachedCache()
         client = MEM_DAO()
@@ -68,8 +67,6 @@ class MemcachedCacheTest(TestCase):
         hit = cache.getCache('mem', '/asd', {})
         self.assertEquals(response.status, 404)
 
-    @skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
-            "Needs configuration to test memcached cache")
     def test_longkeys(self):
         cache = MemcachedCache()
         url = "".join("X" for i in range(300))
@@ -92,15 +89,17 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response, None)
 
     def test_updateCache(self):
-        with self.settings(
-                RESTCLIENTS_DAO_CACHE_CLASS=MEMCACHE,
-                RESTCLIENTS_TEST_MEMCACHED=True,
-                RESTCLIENTS_MEMCACHED_SERVERS=('localhost:11211', )):
-            cache = MemcachedCache()
-            c_entry = cache.getCache('mem', '/same', {})
-            self.assertIsNone(c_entry)
+        cache = MemcachedCache()
+        ret = cache.getCache('mem', '/update', {})
+        self.assertIsNone(ret)
 
-            c_entry = cache.updateCache('mem', '/same',
-                                        json.dumps({"Updared": True}),
-                                        timezone.now())
-            c_entry = cache.getCache('mem', '/same', {})
+        updates = [{"Color": "red"}, {"Color": "blue"}, {"Color": None}]
+
+        for update in updates:
+            cache.updateCache(
+                'mem', '/update', json.dumps(update), timezone.now())
+
+            ret = cache.getCache('mem', '/update', {})
+            response = ret["response"]
+            self.assertEquals(response.status, 200)
+            self.assertEquals(json.loads(response.data), update)
