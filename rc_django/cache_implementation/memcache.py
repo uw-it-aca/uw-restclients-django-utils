@@ -34,7 +34,7 @@ class MemcachedCache(object):
 
         values = json.loads(data)
         if "b64_data" in data:
-            values["data"] = b64decode(values["b64_data"])
+            values["data"] = b64decode(values["b64_data"].decode("utf-8"))
         response = MockHTTP()
         response.status = values["status"]
         response.data = values["data"]
@@ -82,7 +82,7 @@ class MemcachedCache(object):
 
     def __make_cache_data(self, service, url, value_str,
                           header_data, status, time_stamp):
-        b64_data = b64encode(value_str)
+        b64_data = b64encode(value_str.encode("utf-8"))
         data = json.dumps({"status": status,
                            "b64_data": b64_data,
                            "headers": header_data,
