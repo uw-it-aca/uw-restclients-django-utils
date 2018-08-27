@@ -87,7 +87,7 @@ class MemcachedCache(object):
             "status": status,
             "b64_data": b64_data,
             "headers": header_data,
-            "time_stamp": time_stamp.isoformat().decode('utf-8'),
+            "time_stamp": time_stamp.isoformat().encode("utf-8"),
         })
         time_to_store = self.get_cache_expiration_time(service, url)
         return data, time_to_store
@@ -98,11 +98,9 @@ class MemcachedCache(object):
             header_data[header] = response.getheader(header)
 
         key = self._get_key(service, url)
-        cdata, time_to_store = self.__make_cache_data(service, url,
-                                                      response.data,
-                                                      header_data,
-                                                      response.status,
-                                                      timezone.now())
+        cdata, time_to_store = self.__make_cache_data(
+            service, url, response.data, header_data, response.status,
+            timezone.now())
 
         try:
             self.client.set(key, cdata, time=time_to_store)
