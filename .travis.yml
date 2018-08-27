@@ -2,7 +2,7 @@ sudo: false
 language: python
 python:
 - '2.7'
-- '3.6'
+# - '3.6'
 before_script:
 - pip install -e .
 - pip install pycodestyle
@@ -29,4 +29,5 @@ deploy:
     secure: deUQ6IkYWfo7nNcT0r7eGE+g6NM0b7B3AmWhzf1VkufRXsVZOkr5jljX5BpoJ3+UgOhWSW99OgF51xSRSs5WYYrm3PG9m7hRAFvM3gBSQhJKqWvfyX3I9nFVIKYJ3lRH5dVDY5S3VRFkk5OjLNyrTJJjMEew+b0Hdp1m0aqFdJUHwsIaupRtrmjdDK+mMpPv4g6zT8I7dzYt3g4xg7iMy2B2F7to7HRYqS1/KEJVEv8P/fH2xFFE8sCGJMpiJnvE5L0ES5T1SBUtIjoMoB+g18P+VEO0BumHzw49TKhQJFZM0jKfaCqqPBFD6QmC6Pxc6iDdUqrHsG2cLe8ZIytjN4/taL22CfLEMm25QW2wT7Lvkbpn4kcq39db7CslOMwvO9p/5Dk4oxCK22iPnQdHU8rGK0Cj86rg/9zdtHLDlts4QbQ3CEusTFHZVXpdelmYCBr491Gh9N003R3JZRMqm5ABkd6ENyZUxLXe1cKKpiLF2bYMoQv2zpekooZqMQtcrJ3Muv+NjmP7xGOyCkkjxr4iCZVHuScl8K6gu+0S2HA0cI0+59279BxoJVhiv8ejcEiKTI4c5Gp5Qz+MlpIgi7ACsHRdq6SO0lX/CXv99sLi+4lTC8zcG28ghMjPDckbUSuJL9VGxQ5S8SLR6CwHFiAkzDt0nKKkfPUG0FGYwY8=
   on:
     tags: true
-    python: '3.6'
+    python: '2.7'
+#    python: '3.6'
