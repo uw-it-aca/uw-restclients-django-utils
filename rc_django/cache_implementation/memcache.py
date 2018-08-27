@@ -83,10 +83,12 @@ class MemcachedCache(object):
     def __make_cache_data(self, service, url, value_str,
                           header_data, status, time_stamp):
         b64_data = b64encode(value_str.encode("utf-8"))
-        data = json.dumps({"status": status,
-                           "b64_data": b64_data,
-                           "headers": header_data,
-                           "time_stamp": time_stamp.isoformat()})
+        data = json.dumps({
+            "status": status,
+            "b64_data": b64_data,
+            "headers": header_data,
+            "time_stamp": time_stamp.isoformat().decode('utf-8'),
+        })
         time_to_store = self.get_cache_expiration_time(service, url)
         return data, time_to_store
 
