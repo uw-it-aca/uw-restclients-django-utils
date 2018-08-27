@@ -8,9 +8,6 @@ from rc_django.cache_implementation.memcache import MemcachedCache
 from unittest import skipIf
 
 
-MEMCACHE = 'rc_django.cache_implementation.memcache.MemcachedCache'
-
-
 class MEM_DAO(DAO):
     def service_name(self):
         return "mem"
@@ -35,8 +32,8 @@ class Backend(MockDAO):
         return response
 
 
-@skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
-        "Memcached cache backend not configured")
+@skipIf(not getattr(settings, 'RESTCLIENTS_MEMCACHED_SERVERS', None),
+        "Memcached cache not configured")
 class MemcachedCacheTest(TestCase):
     def setUp(self):
         cache = MemcachedCache()
