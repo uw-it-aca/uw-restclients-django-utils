@@ -54,26 +54,33 @@ class MemcachedCacheTest(TestCase):
         response = hit["response"]
         self.assertEquals(response.data, '{"data": "Content2"}')
 
-    def test_process_response(self):
+    def test_processResponse(self):
         mock_resp = MockHTTP()
         mock_resp.status = 200
         mock_resp.data = "Content4"
+        mock_resp.headers = {"Content-type": "text/html"}
 
         cache = MemcachedCache()
         cache.processResponse('mem', '/same1', mock_resp)
 
         hit = cache.getCache('mem', '/same1', {})
         response = hit["response"]
-        self.assertEquals(response.headers, {})
+        self.assertEquals(response.headers, {"Content-type": "text/html"})
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, "Content4")
 
-        # binary data
+    def test_binary_processResponse(self):
+        mock_resp = MockHTTP()
+        mock_resp.status = 200
         mock_resp.data = b'content to be encoded'
+        mock_resp.headers = {"Content-type": "image/png"}
+
+        cache = MemcachedCache()
         cache.processResponse('mem', '/same2', mock_resp)
+
         hit = cache.getCache('mem', '/same2', {})
         response = hit["response"]
-        self.assertEquals(response.headers, {})
+        self.assertEquals(response.headers, {"Content-type": "image/png"})
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, b'content to be encoded')
 
