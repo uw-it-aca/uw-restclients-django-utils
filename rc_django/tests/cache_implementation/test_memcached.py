@@ -1,106 +1,96 @@
 import json
-from django.test import TestCase
+from unittest import skipIf
 from django.conf import settings
+from django.test import TestCase
 from django.utils import timezone
-from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
 from rc_django.cache_implementation.memcache import MemcachedCache
-from unittest import skipIf
 
 
-MEMCACHE = 'rc_django.cache_implementation.memcache.MemcachedCache'
-
-
-class MEM_DAO(DAO):
-    def service_name(self):
-        return "mem"
-
-    def get_default_service_setting(self, key):
-        if "DAO_CLASS" == key:
-            return (
-                "rc_django.tests.cache_implementation.test_memcached.Backend")
-
-    def get_cache(self):
-        return MemcachedCache()
-
-
-class Backend(MockDAO):
-    def load(self, method, url, headers, body):
-        response = MockHTTP()
-        if url == "/same":
-            response.status = 200
-            response.data = "Body Content"
-        else:
-            response.status = 404
-        return response
-
-
+@skipIf(not getattr(settings, 'RESTCLIENTS_MEMCACHED_SERVERS', None),
+        "Memcached cache not configured")
 class MemcachedCacheTest(TestCase):
-    @skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
-            "Needs configuration to test memcached cache")
-    def test_memcached(self):
+    def setUp(self):
         cache = MemcachedCache()
-        client = MEM_DAO()
-        client.getURL('/same', {})
+        cache.client.flush_all()
+
+    def test_cacheGet(self):
+        cache = MemcachedCache()
+        key = cache._get_key('mem', '/same')
+        self.assertEquals(key, "mem-/same")
+
+        data = cache.getCache('mem', '/same', {})
+        self.assertIsNone(data)
+
+        cdata, time_to_store = cache._make_cache_data(
+            'mem', '/same', json.dumps({"data": "Body Content"}),
+            {}, 200, timezone.now())
+        cache.client.set(key, cdata, time_to_store)
 
         hit = cache.getCache('mem', '/same', {})
         response = hit["response"]
-
         self.assertEquals(response.status, 200)
-        self.assertEquals(response.data, "Body Content")
-
-        hit = cache.getCache('mem', '/same', {})
-
-        self.assertEquals(response.status, 200)
-        self.assertEquals(response.data, "Body Content")
-
-    @skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
-            "Needs configuration to test memcached cache")
-    def test_memcached_404(self):
-        cache = MemcachedCache()
-        client = MEM_DAO()
-        client.getURL('/asd', {})
-
-        hit = cache.getCache('mem', '/asd', {})
-        response = hit["response"]
-        self.assertEquals(response.status, 404)
-
-        hit = cache.getCache('mem', '/asd', {})
-        self.assertEquals(response.status, 404)
-
-    @skipIf(not getattr(settings, 'RESTCLIENTS_TEST_MEMCACHED', False),
-            "Needs configuration to test memcached cache")
-    def test_longkeys(self):
-        cache = MemcachedCache()
-        url = "".join("X" for i in range(300))
-
-        ok_response = MockHTTP()
-        ok_response.status = 200
-        ok_response.data = "valid"
-        cache.processResponse('ok', url, ok_response)
-
-        # This makes sure we don't actually cache anything when the url
-        # is too long
-        response = cache.getCache('ok', url, {})
-        self.assertEquals(response, None)
-
-        # But the get doesn't raise the exception w/ the set before it,
-        # so this redundant-looking code is testing to make sure that we
-        # catch the exception on the get as well.
-        url = "".join("Y" for i in range(300))
-        response = cache.getCache('ok', url, {})
-        self.assertEquals(response, None)
+        self.assertEquals(response.data, '{"data": "Body Content"}')
 
     def test_updateCache(self):
-        with self.settings(
-                RESTCLIENTS_DAO_CACHE_CLASS=MEMCACHE,
-                RESTCLIENTS_TEST_MEMCACHED=True,
-                RESTCLIENTS_MEMCACHED_SERVERS=('localhost:11211', )):
-            cache = MemcachedCache()
-            c_entry = cache.getCache('mem', '/same', {})
-            self.assertIsNone(c_entry)
+        cache = MemcachedCache()
+        # cache no data
+        cache.updateCache('mem', '/same', '{"data": "Content1"}',
+                          timezone.now())
 
-            c_entry = cache.updateCache('mem', '/same',
-                                        json.dumps({"Updared": True}),
-                                        timezone.now())
-            c_entry = cache.getCache('mem', '/same', {})
+        time1 = timezone.now()
+        # cache has older data
+        cache.updateCache('mem', '/same', '{"data": "Content2"}', time1)
+
+        hit = cache.getCache('mem', '/same', {})
+        response = hit["response"]
+        self.assertEquals(response.headers, {})
+        self.assertEquals(response.status, 200)
+        self.assertEquals(response.data, '{"data": "Content2"}')
+
+        # update with no newer data
+        cache.updateCache('mem', '/same', '{"data": "Content3"}', time1)
+        hit = cache.getCache('mem', '/same', {})
+        response = hit["response"]
+        self.assertEquals(response.data, '{"data": "Content2"}')
+
+    def test_processResponse(self):
+        mock_resp = MockHTTP()
+        mock_resp.status = 200
+        mock_resp.data = "Content4"
+        mock_resp.headers = {"Content-type": "text/html"}
+
+        cache = MemcachedCache()
+        cache.processResponse('mem', '/same1', mock_resp)
+
+        hit = cache.getCache('mem', '/same1', {})
+        response = hit["response"]
+        self.assertEquals(response.headers, {"Content-type": "text/html"})
+        self.assertEquals(response.status, 200)
+        self.assertEquals(response.data, "Content4")
+
+    def test_binary_processResponse(self):
+        mock_resp = MockHTTP()
+        mock_resp.status = 200
+        mock_resp.data = b'content to be encoded'
+        mock_resp.headers = {"Content-type": "image/png"}
+
+        cache = MemcachedCache()
+        cache.processResponse('mem', '/same2', mock_resp)
+
+        hit = cache.getCache('mem', '/same2', {})
+        response = hit["response"]
+        self.assertEquals(response.headers, {"Content-type": "image/png"})
+        self.assertEquals(response.status, 200)
+        self.assertEquals(response.data, b'content to be encoded')
+
+    def test_memcached_client(self):
+        cache = MemcachedCache()
+        key = cache._get_key('mem', '/same')
+        self.assertEquals(key, "mem-/same")
+        cache.updateCache('mem', '/same', '{"data": "Content"}',
+                          timezone.now())
+        hit = cache.getCache('mem', '/same', {})
+        response = hit["response"]
+        self.assertEquals(response.headers, {})
+        self.assertEquals(response.status, 200)
