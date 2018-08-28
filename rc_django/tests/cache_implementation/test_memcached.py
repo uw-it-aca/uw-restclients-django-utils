@@ -58,27 +58,31 @@ class MemcachedCacheTest(TestCase):
 
     def test_updateCache(self):
         cache = TestCache()
-        time1 = timezone.now()
+        # cache no data
+        MClient.cache = {}
+        cache.updateCache('mem', '/same', '{"data": "Content1"}',
+                          timezone.now())
 
+        time1 = timezone.now()
         # cache has older data
-        cache.updateCache('mem', '/same', '{"data": "Content1"}', time1)
+        cache.updateCache('mem', '/same', '{"data": "Content2"}', time1)
 
         hit = cache.getCache('mem', '/same', {})
         response = hit["response"]
         self.assertEquals(response.headers, {})
         self.assertEquals(response.status, 200)
-        self.assertEquals(response.data, '{"data": "Content1"}')
+        self.assertEquals(response.data, '{"data": "Content2"}')
 
         # update with no newer data
-        cache.updateCache('mem', '/same', '{"data": "Content2"}', time1)
+        cache.updateCache('mem', '/same', '{"data": "Content3"}', time1)
         hit = cache.getCache('mem', '/same', {})
         response = hit["response"]
-        self.assertEquals(response.data, '{"data": "Content1"}')
+        self.assertEquals(response.data, '{"data": "Content2"}')
 
     def test_process_Response(self):
         mock_resp = MockHTTP()
         mock_resp.status = 200
-        mock_resp.data = "Content3"
+        mock_resp.data = "Content4"
 
         cache = TestCache()
         cache.processResponse('mem', '/same1', mock_resp)
@@ -87,7 +91,7 @@ class MemcachedCacheTest(TestCase):
         response = hit["response"]
         self.assertEquals(response.headers, {})
         self.assertEquals(response.status, 200)
-        self.assertEquals(response.data, "Content3")
+        self.assertEquals(response.data, "Content4")
 
     def test_set_client(self):
         with self.settings(
