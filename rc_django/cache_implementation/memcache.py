@@ -2,7 +2,6 @@
 Contains memcached cache implementations
 """
 
-from base64 import b64encode, b64decode
 import bmemcached
 from bmemcached.exceptions import MemcachedException
 import logging
