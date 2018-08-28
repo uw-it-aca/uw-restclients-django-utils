@@ -2,7 +2,7 @@ sudo: false
 language: python
 python:
 - '2.7'
-# - '3.6'
+- '3.6'
 before_script:
 - pip install -e .
 - pip install pycodestyle
@@ -30,4 +30,4 @@ deploy:
   on:
     tags: true
     python: '2.7'
-#    python: '3.6'
+    python: '3.6'
