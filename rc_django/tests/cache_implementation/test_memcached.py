@@ -93,9 +93,22 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, "Content4")
 
-    def test_set_client(self):
+        # binary data
+        mock_resp.data = b'content to be encoded'
+        cache.processResponse('mem', '/same2', mock_resp)
+        hit = cache.getCache('mem', '/same2', {})
+        response = hit["response"]
+        self.assertEquals(response.headers, {})
+        self.assertEquals(response.status, 200)
+        self.assertEquals(response.data, b'content to be encoded')
+
+    def test_memcached_client(self):
         with self.settings(
                 RESTCLIENTS_MEMCACHED_SERVERS=('localhost:11211', )):
             cache = MemcachedCache()
             key = cache._get_key('mem', '/same')
             self.assertEquals(key, "mem-/same")
+            cache.updateCache('mem', '/same', '{"data": "Content"}',
+                              timezone.now())
+            hit = cache.getCache('mem', '/same', {})
+            self.assertIsNone(hit)

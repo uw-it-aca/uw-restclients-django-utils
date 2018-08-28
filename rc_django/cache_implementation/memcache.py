@@ -5,8 +5,8 @@ Contains memcached cache implementations
 from base64 import b64encode, b64decode
 import bmemcached
 from bmemcached.exceptions import MemcachedException
-import json
 import logging
+import pickle
 import threading
 from dateutil.parser import parse
 from django.conf import settings
@@ -33,15 +33,11 @@ class MemcachedCache(object):
         if not data:
             return None
 
-        values = json.loads(data)
+        values = pickle.loads(data)
         response = MockHTTP()
         response.headers = values["headers"]
         response.status = values["status"]
-
-        if "b64_data" in values:
-            response.data = b64decode(values["b64_data"])
-        else:
-            response.data = values["data"]
+        response.data = values["data"]
 
         return {"response": response}
 
@@ -58,7 +54,7 @@ class MemcachedCache(object):
         try:
             value = self.client.get(key)
             if value:
-                data = json.loads(value)
+                data = pickle.loads(value)
                 if "time_stamp" in data:
                     cached_data_dt = parse(data["time_stamp"])
                     if new_data_dt > cached_data_dt:
@@ -88,15 +84,11 @@ class MemcachedCache(object):
                          header_data, status, time_stamp):
         data = {"status": status,
                 "headers": header_data,
+                "data": data_to_cache,
                 "time_stamp": time_stamp.isoformat()
                 }
-        if isinstance(data_to_cache, (bytes, bytearray)):
-            data["b64_data"] = b64encode(data_to_cache)
-        else:
-            data["data"] = data_to_cache
-
         time_to_store = self.get_cache_expiration_time(service, url)
-        return json.dumps(data), time_to_store
+        return pickle.dumps(data), time_to_store
 
     def processResponse(self, service, url, response):
         header_data = {}
