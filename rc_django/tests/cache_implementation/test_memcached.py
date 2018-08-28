@@ -1,6 +1,8 @@
 import json
+from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
+from restclients_core.models import MockHTTP
 from rc_django.cache_implementation.memcache import MemcachedCache
 
 
@@ -56,12 +58,40 @@ class MemcachedCacheTest(TestCase):
 
     def test_updateCache(self):
         cache = TestCache()
-        cache.updateCache('mem', '/same',
-                          '{"data": "Body Content"}',
-                          timezone.now())
+        time1 = timezone.now()
+
+        # cache has older data
+        cache.updateCache('mem', '/same', '{"data": "Content1"}', time1)
 
         hit = cache.getCache('mem', '/same', {})
         response = hit["response"]
         self.assertEquals(response.headers, {})
         self.assertEquals(response.status, 200)
-        self.assertEquals(response.data, '{"data": "Body Content"}')
+        self.assertEquals(response.data, '{"data": "Content1"}')
+
+        # update with no newer data
+        cache.updateCache('mem', '/same', '{"data": "Content2"}', time1)
+        hit = cache.getCache('mem', '/same', {})
+        response = hit["response"]
+        self.assertEquals(response.data, '{"data": "Content1"}')
+
+    def test_process_Response(self):
+        mock_resp = MockHTTP()
+        mock_resp.status = 200
+        mock_resp.data = "Content3"
+
+        cache = TestCache()
+        cache.processResponse('mem', '/same1', mock_resp)
+
+        hit = cache.getCache('mem', '/same1', {})
+        response = hit["response"]
+        self.assertEquals(response.headers, {})
+        self.assertEquals(response.status, 200)
+        self.assertEquals(response.data, "Content3")
+
+    def test_set_client(self):
+        with self.settings(
+                RESTCLIENTS_MEMCACHED_SERVERS=('localhost:11211', )):
+            cache = MemcachedCache()
+            key = cache._get_key('mem', '/same')
+            self.assertEquals(key, "mem-/same")
