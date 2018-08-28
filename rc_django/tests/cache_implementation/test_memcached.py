@@ -111,4 +111,6 @@ class MemcachedCacheTest(TestCase):
             cache.updateCache('mem', '/same', '{"data": "Content"}',
                               timezone.now())
             hit = cache.getCache('mem', '/same', {})
-            self.assertIsNone(hit)
+            response = hit["response"]
+            self.assertEquals(response.headers, {})
+            self.assertEquals(response.status, 200)
