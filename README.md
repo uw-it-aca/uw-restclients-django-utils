@@ -1,3 +1,6 @@
+[![Build Status](https://api.travis-ci.org/uw-it-aca/uw-restclients-django-utils.svg?branch=master)](https://travis-ci.org/uw-it-aca/uw-restclients-django-utils)
+[![Coverage Status](https://coveralls.io/repos/uw-it-aca/uw-restclients-django-utils/badge.png?branch=master)](https://coveralls.io/r/uw-it-aca/uw-restclients-django-utils?branch=master)
+
 # uw-restclients-django-utils
 Django utilities for enhancing uw-restclients clients
 
