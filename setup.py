@@ -24,8 +24,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'Django>=1.11,<2.0',
-        'UW-RestClients-Core>0.8',
-        'django-userservice>=2.0.2,<3.0',
+        'UW-RestClients-Core>1.0,<2.0',
+        'django-userservice>3.0,<4.0',
         'python-binary-memcached',
         'python-dateutil'
     ],
@@ -38,7 +38,6 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
     ],
 )
