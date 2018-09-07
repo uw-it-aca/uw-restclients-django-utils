@@ -16,11 +16,7 @@ from rc_django.decorators import restclient_admin_required
 from rc_django.models import DegradePerformance
 from userservice.user import UserService
 from time import time
-try:
-    from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
-except ImportError:
-    from urllib import quote, unquote, urlencode
-    from urlparse import urlparse, parse_qs
+from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
 from base64 import b64encode
 
 
