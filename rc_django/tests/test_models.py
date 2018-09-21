@@ -1,6 +1,7 @@
+from unittest import skipIf
 from django.test import TestCase
 from django.conf import settings
-from unittest2 import skipIf
+
 
 has_rc_django = False
 try:
