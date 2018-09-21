@@ -5,7 +5,7 @@ from django.test.utils import override_settings
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
 from rc_django.views import (
