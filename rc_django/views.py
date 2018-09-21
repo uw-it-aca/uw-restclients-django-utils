@@ -3,7 +3,7 @@ import json
 import logging
 import traceback
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader, RequestContext, TemplateDoesNotExist
 from django.shortcuts import render
@@ -48,7 +48,7 @@ def get_response(request, service, url, headers, dao):
     try:
         response = dao.getURL(url, headers)
     except DataFailureException as ex:
-        logger.error(ex)
+        logger.error(str(ex))
         response = get_mock_response(ex)
     end = time()
     return response, start, end

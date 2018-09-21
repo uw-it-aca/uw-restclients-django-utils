@@ -1,8 +1,6 @@
-from django.db import models
-from base64 import b64encode, b64decode
-from hashlib import sha1
-import pickle
 import json
+from django.db import models
+from hashlib import sha1
 
 
 class CacheEntry(models.Model):
@@ -10,9 +8,8 @@ class CacheEntry(models.Model):
     url = models.TextField()
     url_key = models.SlugField(max_length=40, unique=True)
     status = models.PositiveIntegerField()
-    header_pickle = models.TextField()
     content = models.TextField()
-    headers = None
+    headers = models.TextField()
 
     class Meta:
         app_label = 'rc_django'
@@ -20,24 +17,10 @@ class CacheEntry(models.Model):
         unique_together = ('service', 'url_key')
 
     def getHeaders(self):
-        if self.headers is None:
-            if self.header_pickle is None:
-                self.headers = {}
-            else:
-                self.headers = pickle.loads(b64decode(self.header_pickle))
-        return self.headers
-
-    def setHeaders(self, headers):
-        self.headers = headers
+        return json.loads(self.headers)
 
     def save(self, *args, **kwargs):
-        pickle_content = ""
-        if self.headers:
-            pickle_content = pickle.dumps(self.headers)
-        else:
-            pickle_content = pickle.dumps({})
-
-        self.header_pickle = b64encode(pickle_content)
+        self.headers = json.dumps(self.headers)
         self.url_key = self.get_url_key(self.url)
         super(CacheEntry, self).save(*args, **kwargs)
 

@@ -23,11 +23,11 @@ setup(
     author_email="aca-it@uw.edu",
     include_package_data=True,
     install_requires=[
-        'Django>=1.11,<2.0',
+        'Django>2.1,<3.0',
         'UW-RestClients-Core>1.0,<2.0',
-        'django-userservice>3.0,<4.0',
+        'django-userservice>3.1,<4.0',
         'python-binary-memcached',
-        'python-dateutil'
+        'python-dateutil',
     ],
     license='Apache License, Version 2.0',
     description=('UW-RestClients-Django-Utils'),
