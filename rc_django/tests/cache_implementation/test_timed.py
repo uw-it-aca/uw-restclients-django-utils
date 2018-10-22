@@ -36,7 +36,7 @@ class Backend(MockDAO):
         response = MockHTTP()
         if url == "/same":
             response.status = 200
-            response.data = "Body Content"
+            response.data = b"Body Content"
         else:
             response.status = 404
         return response
@@ -80,7 +80,7 @@ class TimeCacheTest(TestCase):
         response = client.getURL('/same', {})
 
         self.assertEquals(response.status, 200)
-        self.assertEquals(response.data, "Body Content")
+        self.assertEquals(response.data, b"Body Content")
 
         # Make sure there's a response there after the get
         hit = cache.getCache('simple', '/same', {})
@@ -98,7 +98,7 @@ class TimeCacheTest(TestCase):
         client = FOUR_DAO()
         response = client.getURL('/same', {})
 
-        self.assertEquals(response.data, "Body Content")
+        self.assertEquals(response.data, b"Body Content")
 
         # Make sure there's a response there after the get
         hit = cache.getCache('four', '/same', {})
