@@ -80,7 +80,10 @@ class TimedCache(object):
         cache_entry.service = service
         cache_entry.url = url
         cache_entry.status = response.status
-        cache_entry.content = response.data
+        try:
+            cache_entry.content = response.data.decode('utf-8')
+        except AttributeError:
+            cache_entry.content = response.data
 
         # This extra step is needed w/ Live resources because
         # HTTPHeaderDict isn't serializable.
