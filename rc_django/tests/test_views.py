@@ -128,12 +128,16 @@ class ViewTest(TestCase):
         formatted = (u'{<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;"Href":&nbsp;'
                      u'"<a href="/view/pws/identity/v2/entity.json">'
                      u'/identity/v2/entity.json</a>"<br/>\n}')
-        self.assertEquals(formatted, format_json(service, json_data))
+        html, raw = format_json(service, json_data)
+        self.assertEquals(formatted, html)
+        self.assertEquals(json_data, raw)
 
         json_data = '{"Decimal": 5.678}'
         formatted = ('{<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;"Decimal":'
                      '&nbsp;5.678<br/>\n}')
-        self.assertEquals(formatted, format_json(service, json_data))
+        html, raw = format_json(service, json_data)
+        self.assertEquals(formatted, html)
+        self.assertEquals(json_data, raw)
 
         self.assertRaises(ValueError, format_json, service, '<p></p>')
 
