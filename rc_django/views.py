@@ -127,8 +127,7 @@ def proxy(request, service, url):
     elif not use_pre:
         try:
             # Assume json, and try to format it.
-            content = format_json(service, response.data)
-            json_data = response.data
+            content, json_data = format_json(service, response.data)
         except ValueError:
             content = format_html(service, response.data)
 
@@ -175,8 +174,8 @@ def format_search_params(url):
 
 
 def format_json(service, content):
-    json_data = json.loads(content)
-    formatted = json.dumps(json_data, sort_keys=True, indent=4)
+    data = json.loads(content)
+    formatted = json.dumps(data, sort_keys=True, indent=4)
     formatted = formatted.replace("&", "&amp;")
     formatted = formatted.replace("<", "&lt;")
     formatted = formatted.replace(">", "&gt;")
@@ -190,7 +189,7 @@ def format_json(service, content):
                        r'"<a href="%s/%s/\1">/\1</a>"' % (base_url, service),
                        formatted)
 
-    return formatted
+    return formatted, json.dumps(data, sort_keys=True)
 
 
 def format_html(service, content):
