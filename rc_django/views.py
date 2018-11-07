@@ -136,7 +136,7 @@ def proxy(request, service, url):
         "content": content,
         "json_data": json_data,
         "response_code": response.status,
-        "time_taken": "{:d} seconds".format(end - start),
+        "time_taken": "{:f} seconds".format(end - start),
         "headers": response.headers,
         "override_user": user_service.get_override_user(),
         "use_pre": use_pre,
