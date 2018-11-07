@@ -80,7 +80,8 @@ class MemcachedCache(object):
         self.client.set(key, cdata, time=time_to_store)
         # may raise MemcachedException
         logger.info(
-            "MemCached SET (key {}) for {} seconds".format(key, time_to_store))
+            "MemCached SET (key {}) for {:d} seconds".format(
+                key, time_to_store))
 
     def _make_cache_data(self, service, url, data_to_cache,
                          header_data, status, time_stamp):
@@ -105,7 +106,7 @@ class MemcachedCache(object):
                                                      timezone.now())
         try:
             self.client.set(key, cdata, time=time_to_store)
-            logger.info("MemCached set with key '{}', {} seconds".format(
+            logger.info("MemCached set with key '{}', {:d} seconds".format(
                 key, time_to_store))
         except bmemcached.exceptions.MemcachedException as ex:
             logger.error("set (key: {}) ==> {}".format(key, str(ex)))
