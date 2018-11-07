@@ -82,7 +82,7 @@ def proxy(request, service, url):
                 url = url.replace("?campus=", "/")
             elif "course?" in url:
                 url_prefix = re.sub(r'\?.*$', "", url)
-                url = "%s/%s/%s/%s/%s/%s" % (
+                url = "{}/{}/{}/{}/{}/{}".format(
                     url_prefix,
                     request.GET["year"],
                     request.GET["quarter"],
@@ -100,14 +100,14 @@ def proxy(request, service, url):
             service_name = 'iasystem_uw'
         dao = get_dao_instance(service_name)
     except (AttributeError, ImportError):
-        return HttpResponse("Missing service: %s" % service,
+        return HttpResponse("Missing service: {}".format(service),
                             status=404)
 
-    url = "/%s" % quote(url)
+    url = "/{}".format(quote(url))
 
     if request.GET:
         try:
-            url = "%s?%s" % (url, urlencode(request.GET))
+            url = "{}?{}".format(url, urlencode(request.GET))
         except UnicodeEncodeError as err:
             return HttpResponse(
                 'Bad URL param given to the restclients browser')
@@ -136,7 +136,7 @@ def proxy(request, service, url):
         "content": content,
         "json_data": json_data,
         "response_code": response.status,
-        "time_taken": "%f seconds" % (end - start),
+        "time_taken": "{:f} seconds".format(end - start),
         "headers": response.headers,
         "override_user": user_service.get_override_user(),
         "use_pre": use_pre,
@@ -155,7 +155,8 @@ def proxy(request, service, url):
 
     try:
         search_template_path = re.sub(r"[.?].*$", "", url)
-        search_template = "proxy/%s%s.html" % (service, search_template_path)
+        search_template = "proxy/{}{}.html".format(service,
+                                                   search_template_path)
         loader.get_template(search_template)
         context["search_template"] = search_template
         context["search"] = format_search_params(url)
@@ -186,7 +187,8 @@ def format_json(service, content):
     base_url = base_url.replace('/xx/xx', '')
 
     formatted = re.sub(r"\"/(.*?)\"",
-                       r'"<a href="%s/%s/\1">/\1</a>"' % (base_url, service),
+                       r'"<a href="{}/{}/\1">/\1</a>"'.format(base_url,
+                                                              service),
                        formatted)
 
     return formatted, json.dumps(data, sort_keys=True)
@@ -197,7 +199,8 @@ def format_html(service, content):
     base_url = base_url.replace('/xx/xx', '')
 
     formatted = re.sub(r"href\s*=\s*\"/(.*?)\"",
-                       r'href="%s/%s/\1"' % (base_url, service), content)
+                       r'href="{}/{}/\1"'.format(base_url, service),
+                       content)
     formatted = re.sub(re.compile(r"<style.*/style>", re.S), "", formatted)
     formatted = clean_self_closing_divs(formatted)
     return formatted
@@ -221,18 +224,16 @@ def errors(request):
     drop_keys = []
     if request.method == "POST":
         for key in problems.services():
-            keepit = "keep_%s" % key
+            keepit = "keep_{}".format(key)
             if keepit not in request.POST:
                 problems.remove_service(key)
             else:
-                problems.set_status(key,
-                                    request.POST.get("%s_status" % key, None))
-                problems.set_content(key,
-                                     request.POST.get("%s_content" % key,
-                                                      None))
-                problems.set_load_time(key,
-                                       request.POST.get("%s_load_time" % key,
-                                                        None))
+                problems.set_status(
+                    key, request.POST.get("{}_status".format(key), None))
+                problems.set_content(
+                    key, request.POST.get("{}_content".format(key), None))
+                problems.set_load_time(
+                    key, request.POST.get("{}_load_time".format(key), None))
 
         new_service = request.POST.get("new_service_name", None)
         if new_service:
