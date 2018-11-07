@@ -26,7 +26,7 @@ class MemcachedCache(object):
         try:
             data = self.client.get(key)
         except MemcachedException as ex:
-            logger.error("Get (key: %s) ==> %s", key, str(ex))
+            logger.error("Get (key: {}) ==> {}".format(key, str(ex)))
             return
 
         if not data:
@@ -59,15 +59,18 @@ class MemcachedCache(object):
                     if new_data_dt > cached_data_dt:
                         self.client.delete(key)
                         # may raise MemcachedException
-                        logger.info("IN cache (key: %s), older DELETE", key)
+                        logger.info(
+                            "IN cache (key: {}), older DELETE".format(key))
                     else:
-                        logger.info("IN cache (key: %s), newer KEEP", key)
+                        logger.info(
+                            "IN cache (key: {}), newer KEEP".format(key))
                         return
             else:
-                logger.info("NOT IN cache (key: %s)", key)
+                logger.info("NOT IN cache (key: {})".format(key))
 
         except MemcachedException as ex:
-            logger.error("Clear existing data (key: %s) ==> %s", key, str(ex))
+            logger.error(
+                "Clear existing data (key: {}) ==> {}".format(key, str(ex)))
             return
 
         # store new value in cache
@@ -76,8 +79,8 @@ class MemcachedCache(object):
 
         self.client.set(key, cdata, time=time_to_store)
         # may raise MemcachedException
-        logger.info("MemCached SET (key %s) for %d seconds",
-                    key, time_to_store)
+        logger.info(
+            "MemCached SET (key {}) for {} seconds".format(key, time_to_store))
 
     def _make_cache_data(self, service, url, data_to_cache,
                          header_data, status, time_stamp):
@@ -102,10 +105,10 @@ class MemcachedCache(object):
                                                      timezone.now())
         try:
             self.client.set(key, cdata, time=time_to_store)
-            logger.info("MemCached set with key '%s', %d seconds",
-                        key, time_to_store)
+            logger.info("MemCached set with key '{}', {} seconds".format(
+                key, time_to_store))
         except bmemcached.exceptions.MemcachedException as ex:
-            logger.error("set (key: %s) ==> %s", key, str(ex))
+            logger.error("set (key: {}) ==> {}".format(key, str(ex)))
         return
 
     def get_cache_expiration_time(self, service, url):
@@ -113,7 +116,7 @@ class MemcachedCache(object):
         return 60 * 60 * 4
 
     def _get_key(self, service, url):
-        return "%s-%s" % (service, url)
+        return "{}-{}".format(service, url)
 
     def _set_client(self):
         thread_id = threading.current_thread().ident

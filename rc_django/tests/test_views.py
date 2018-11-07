@@ -46,7 +46,7 @@ def missing_url(name, *args, **kwargs):
     try:
         url = reverse(name, *args, **kwargs)
     except Exception as ex:
-        print("%s" % ex)
+        print(str(ex))
         if getattr(settings, "RESTCLIENTS_REQUIRE_VIEW_TESTS", False):
             raise
         return True
