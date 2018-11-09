@@ -32,7 +32,7 @@ class MemcachedCache(object):
         if not data:
             return None
 
-        values = pickle.loads(data)
+        values = pickle.loads(data, encoding="utf8")
         response = MockHTTP()
         response.headers = values["headers"]
         response.status = values["status"]
@@ -53,7 +53,7 @@ class MemcachedCache(object):
         try:
             value = self.client.get(key)
             if value:
-                data = pickle.loads(value)
+                data = pickle.loads(value, encoding="utf8")
                 if "time_stamp" in data:
                     cached_data_dt = parse(data["time_stamp"])
                     if new_data_dt > cached_data_dt:
