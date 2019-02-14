@@ -5,7 +5,7 @@ from django.db import migrations, models
 from rc_django.models import CacheEntry, CacheEntryTimed
 
 
-def clear_cache():
+def clear_cache(apps, schema_editor):
     CacheEntryTimed.objects.all().delete()
     CacheEntry.objects.all().delete()
 
