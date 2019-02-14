@@ -17,6 +17,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(clear_cache),
         migrations.AddField(
             model_name='cacheentry',
             name='url_key',
@@ -40,5 +41,4 @@ class Migration(migrations.Migration):
             name='cacheentry',
             unique_together=set([('service', 'url_key')]),
         ),
-        migrations.RunPython(clear_cache),
     ]
