@@ -143,33 +143,28 @@ class ViewTest(TestCase):
 
     def test_format_html(self):
         service = 'pws'
+        output = '<a href="/view/pws/api/v1/test"></a>'
 
         html = '<a href="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html),
-                         '<a href="/view/pws/api/v1/test"></a>')
+        self.assertEqual(format_html(service, html), output)
 
         html = '<a HREF="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html),
-                         '<a href="/view/pws/api/v1/test"></a>')
+        self.assertEqual(format_html(service, html), output)
 
         # Binary string
         html = b'<a href="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html),
-                         '<a href="/view/pws/api/v1/test"></a>')
+        self.assertEqual(format_html(service, html), output)
 
         # Single quotes
         html = "<a href='/api/v1/test'></a>"
-        self.assertEqual(format_html(service, html),
-                         '<a href="/view/pws/api/v1/test"></a>')
+        self.assertEqual(format_html(service, html), output)
 
         # Style tags
         html = '<style>h1 {color:red;}</style><a href="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html),
-                         '<a href="/view/pws/api/v1/test"></a>')
+        self.assertEqual(format_html(service, html), output)
 
         html = b'<STYLE>h1 {color:red;}</STYLE><a href="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html),
-                         '<a href="/view/pws/api/v1/test"></a>')
+        self.assertEqual(format_html(service, html), output)
 
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
             "restclients urls not configured")
