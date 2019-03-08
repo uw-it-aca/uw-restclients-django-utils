@@ -78,17 +78,17 @@ def proxy(request, service, url):
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
     elif service == "libcurrics":
-            if "?campus=" in url:
-                url = url.replace("?campus=", "/")
-            elif "course?" in url:
-                url_prefix = re.sub(r'\?.*$', "", url)
-                url = "{}/{}/{}/{}/{}/{}".format(
-                    url_prefix,
-                    request.GET["year"],
-                    request.GET["quarter"],
-                    request.GET["curriculum_abbr"],
-                    request.GET["course_number"],
-                    request.GET["section_id"])
+        if "?campus=" in url:
+            url = url.replace("?campus=", "/")
+        elif "course?" in url:
+            url_prefix = re.sub(r'\?.*$', "", url)
+            url = "{}/{}/{}/{}/{}/{}".format(
+                url_prefix,
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["curriculum_abbr"],
+                request.GET["course_number"],
+                request.GET["section_id"])
     elif service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
     elif service == "calendar":
