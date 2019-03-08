@@ -9,7 +9,7 @@ from django.urls import reverse
 from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
 from rc_django.views import (
-    proxy, clean_self_closing_divs, format_json, get_dao_instance)
+    proxy, clean_self_closing_divs, format_json, format_html, get_dao_instance)
 from userservice.user import UserServiceMiddleware
 from unittest import skipIf
 
@@ -140,6 +140,31 @@ class ViewTest(TestCase):
         self.assertEquals(json_data, raw)
 
         self.assertRaises(ValueError, format_json, service, '<p></p>')
+
+    def test_format_html(self):
+        service = 'pws'
+        output = '<a href="/view/pws/api/v1/test"></a>'
+
+        html = '<a href="/api/v1/test"></a>'
+        self.assertEqual(format_html(service, html), output)
+
+        html = '<a HREF="/api/v1/test"></a>'
+        self.assertEqual(format_html(service, html), output)
+
+        # Binary string
+        html = b'<a href="/api/v1/test"></a>'
+        self.assertEqual(format_html(service, html), output)
+
+        # Single quotes
+        html = "<a href='/api/v1/test'></a>"
+        self.assertEqual(format_html(service, html), output)
+
+        # Style tags
+        html = '<style>h1 {color:red;}</style><a href="/api/v1/test"></a>'
+        self.assertEqual(format_html(service, html), output)
+
+        html = b'<STYLE>h1 {color:red;}</STYLE><a href="/api/v1/test"></a>'
+        self.assertEqual(format_html(service, html), output)
 
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
             "restclients urls not configured")

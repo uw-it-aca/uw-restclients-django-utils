@@ -78,17 +78,17 @@ def proxy(request, service, url):
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
     elif service == "libcurrics":
-            if "?campus=" in url:
-                url = url.replace("?campus=", "/")
-            elif "course?" in url:
-                url_prefix = re.sub(r'\?.*$', "", url)
-                url = "{}/{}/{}/{}/{}/{}".format(
-                    url_prefix,
-                    request.GET["year"],
-                    request.GET["quarter"],
-                    request.GET["curriculum_abbr"],
-                    request.GET["course_number"],
-                    request.GET["section_id"])
+        if "?campus=" in url:
+            url = url.replace("?campus=", "/")
+        elif "course?" in url:
+            url_prefix = re.sub(r'\?.*$', "", url)
+            url = "{}/{}/{}/{}/{}/{}".format(
+                url_prefix,
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["curriculum_abbr"],
+                request.GET["course_number"],
+                request.GET["section_id"])
     elif service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
     elif service == "calendar":
@@ -195,13 +195,19 @@ def format_json(service, content):
 
 
 def format_html(service, content):
+    try:
+        content = content.decode('utf-8')
+    except AttributeError:
+        pass
+
     base_url = reverse("restclients_proxy", args=["xx", "xx"])
     base_url = base_url.replace('/xx/xx', '')
 
-    formatted = re.sub(r"href\s*=\s*\"/(.*?)\"",
+    formatted = re.sub(r"href\s*=\s*[\"\']/(.*?)[\"\']",
                        r'href="{}/{}/\1"'.format(base_url, service),
-                       content)
-    formatted = re.sub(re.compile(r"<style.*/style>", re.S), "", formatted)
+                       content, flags=re.I)
+    formatted = re.sub(
+        re.compile(r"<style.*/style>", flags=re.S | re.I), "", formatted)
     formatted = clean_self_closing_divs(formatted)
     return formatted
 
