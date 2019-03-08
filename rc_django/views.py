@@ -195,13 +195,19 @@ def format_json(service, content):
 
 
 def format_html(service, content):
+    try:
+        content = content.decode('utf-8')
+    except AttributeError:
+        pass
+
     base_url = reverse("restclients_proxy", args=["xx", "xx"])
     base_url = base_url.replace('/xx/xx', '')
 
-    formatted = re.sub(r"href\s*=\s*\"/(.*?)\"",
+    formatted = re.sub(r"href\s*=\s*[\"\']/(.*?)[\"\']",
                        r'href="{}/{}/\1"'.format(base_url, service),
-                       content)
-    formatted = re.sub(re.compile(r"<style.*/style>", re.S), "", formatted)
+                       content, flags=re.I)
+    formatted = re.sub(
+        re.compile(r"<style.*/style>", flags=re.S | re.I), "", formatted)
     formatted = clean_self_closing_divs(formatted)
     return formatted
 
