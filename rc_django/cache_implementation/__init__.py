@@ -88,8 +88,9 @@ class TimedCache(object):
         # This extra step is needed w/ Live resources because
         # HTTPHeaderDict isn't serializable.
         header_data = {}
-        for header in response.headers:
-            header_data[header] = response.getheader(header)
+        if response.headers is not None:
+            for header in response.headers:
+                header_data[header] = response.getheader(header)
 
         cache_entry.headers = header_data
         cache_entry.time_saved = now
