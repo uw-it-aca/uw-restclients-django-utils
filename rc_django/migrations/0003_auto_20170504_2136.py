@@ -11,7 +11,13 @@ class Migration(migrations.Migration):
         ('rc_django', '0002_auto_20170504_2132'),
     ]
 
-    operations = [
+    operations = []
+
+    # after two years, ran into a postgres problem with this migration.
+    # since this has existed two years, it's believed all apps using these
+    # have already been migrated, so the resulting table has been moved
+    # up into migration 0001
+    x_operations = [
         migrations.AddField(
             model_name='cacheentry',
             name='url_key',
