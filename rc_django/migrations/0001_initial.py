@@ -19,7 +19,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('service', models.CharField(db_index=True, max_length=50)),
-                ('url', models.CharField(db_index=True, max_length=255, unique=True)),
+                ('url', models.TextField()),
+                ('url_key', models.SlugField(max_length=40, unique=True)),
                 ('status', models.PositiveIntegerField()),
                 ('header_pickle', models.TextField()),
                 ('content', models.TextField()),
@@ -41,6 +42,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='cacheentry',
-            unique_together=set([('service', 'url')]),
+            unique_together=set([('service', 'url_key')]),
         ),
     ]
