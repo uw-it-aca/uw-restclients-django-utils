@@ -28,6 +28,7 @@ setup(
         'django-userservice>3.1,<4.0',
         'python-binary-memcached',
         'python-dateutil',
+        'redis-py',
     ],
     license='Apache License, Version 2.0',
     description=('UW-RestClients-Django-Utils'),

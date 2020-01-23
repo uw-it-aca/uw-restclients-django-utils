@@ -4,6 +4,7 @@ python:
 - '3.6'
 services:
 - memcached
+- redis-server
 before_script:
 - pip install -e .
 - pip install pycodestyle
