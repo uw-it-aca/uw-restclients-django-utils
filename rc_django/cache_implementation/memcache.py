@@ -11,6 +11,7 @@ from dateutil.parser import parse
 from django.conf import settings
 from django.utils import timezone
 from restclients_core.models import MockHTTP
+from rc_django.cache_implementation.logger import log_err
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class MemcachedCache(object):
         try:
             data = self.client.get(key)
         except MemcachedException as ex:
-            logger.error("Get (key: {}) ==> {}".format(key, str(ex)))
+            log_err(logger, "Get (key: {}) => {}".format(key, ex))
             return
 
         if not data:
@@ -59,18 +60,19 @@ class MemcachedCache(object):
                     if new_data_dt > cached_data_dt:
                         self.client.delete(key)
                         # may raise MemcachedException
-                        logger.info(
+                        logger.debug(
                             "IN cache (key: {}), older DELETE".format(key))
                     else:
-                        logger.info(
+                        logger.debug(
                             "IN cache (key: {}), newer KEEP".format(key))
                         return
             else:
-                logger.info("NOT IN cache (key: {})".format(key))
+                logger.debug("NOT IN cache (key: {})".format(key))
 
         except MemcachedException as ex:
-            logger.error(
-                "Clear existing data (key: {}) ==> {}".format(key, str(ex)))
+            log_err(
+                logger,
+                "Clear existing data (key: {}) ==> {}".format(key, ex))
             return
 
         # store new value in cache
@@ -79,7 +81,7 @@ class MemcachedCache(object):
 
         self.client.set(key, cdata, time=time_to_store)
         # may raise MemcachedException
-        logger.info(
+        logger.debug(
             "MemCached SET (key {}) for {:d} seconds".format(
                 key, time_to_store))
 
@@ -106,10 +108,10 @@ class MemcachedCache(object):
                                                      timezone.now())
         try:
             self.client.set(key, cdata, time=time_to_store)
-            logger.info("MemCached set with key '{}', {:d} seconds".format(
+            logger.debug("MemCached set with key '{}', {:d} seconds".format(
                 key, time_to_store))
         except bmemcached.exceptions.MemcachedException as ex:
-            logger.error("set (key: {}) ==> {}".format(key, str(ex)))
+            log_err(logger, "set (key: {}) ==> {}".format(key, ex))
         return
 
     def get_cache_expiration_time(self, service, url):
