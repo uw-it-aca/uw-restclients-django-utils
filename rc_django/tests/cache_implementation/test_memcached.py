@@ -3,6 +3,7 @@ from unittest import skipIf
 from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
+from unittest.mock import patch
 from restclients_core.models import MockHTTP
 from rc_django.cache_implementation.memcache import MemcachedCache
 
@@ -14,7 +15,8 @@ class MemcachedCacheTest(TestCase):
         cache = MemcachedCache()
         cache.client.flush_all()
 
-    def test_cacheGet(self):
+    @patch.object(MemcachedCache, 'client.get', spec=True)
+    def test_cacheGet(self, mock):
         cache = MemcachedCache()
         key = cache._get_key('mem', '/same')
         self.assertEquals(key, "mem-/same")
@@ -32,6 +34,10 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, '{"data": "Body Content"}')
 
+        mock.side_effect = MemcachedException
+        cache.getCache('mem', '/same', {})
+
+    @patch.object(MemcachedCache, 'client.get', spec=True)
     def test_updateCache(self):
         cache = MemcachedCache()
         # cache no data
@@ -54,6 +60,10 @@ class MemcachedCacheTest(TestCase):
         response = hit["response"]
         self.assertEquals(response.data, '{"data": "Content2"}')
 
+        mock.side_effect = MemcachedException
+        cache.updateCache('mem', '/same', '{"data": "Content3"}', time1)
+
+    @patch.object(MemcachedCache, 'client.set', spec=True)
     def test_processResponse(self):
         mock_resp = MockHTTP()
         mock_resp.status = 200
@@ -68,6 +78,9 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response.headers, {"Content-type": "text/html"})
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, "Content4")
+
+        mock.side_effect = MemcachedException
+        cache.processResponse('mem', '/same1', mock_resp)
 
     def test_binary_processResponse(self):
         mock_resp = MockHTTP()
