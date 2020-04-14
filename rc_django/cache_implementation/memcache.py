@@ -2,7 +2,7 @@
 Contains memcached cache implementations
 """
 
-import bmemcached
+from bmemcached import Client
 from bmemcached.exceptions import MemcachedException
 import logging
 import pickle
@@ -11,6 +11,7 @@ from dateutil.parser import parse
 from django.conf import settings
 from django.utils import timezone
 from restclients_core.models import MockHTTP
+from rc_django.cache_implementation.logger import log_err, log_info
 
 
 logger = logging.getLogger(__name__)
@@ -21,12 +22,19 @@ class MemcachedCache(object):
     def __init__(self):
         self._set_client()
 
+    def deleteCache(self, service, url):
+        key = self._get_key(service, url)
+        try:
+            return self.client.delete(key)
+        except MemcachedException as ex:
+            log_err(logger, "MemCache Delete(key: {}) => {}".format(key, ex))
+
     def getCache(self, service, url, headers):
         key = self._get_key(service, url)
         try:
             data = self.client.get(key)
         except MemcachedException as ex:
-            logger.error("Get (key: {}) ==> {}".format(key, str(ex)))
+            log_err(logger, "MemCache Get(key: {}) => {}".format(key, ex))
             return
 
         if not data:
@@ -40,6 +48,21 @@ class MemcachedCache(object):
 
         return {"response": response}
 
+    def processResponse(self, service, url, response):
+        header_data = {}
+        for header in response.headers:
+            header_data[header] = response.getheader(header)
+
+        key = self._get_key(service, url)
+        cdata, time_to_store = self._make_cache_data(
+            service, url, response.data, header_data,
+            response.status, timezone.now())
+        try:
+            self.client.set(key, cdata, time=time_to_store)
+            log_info(logger, "MemCache Set(key: {})".format(key))
+        except MemcachedException as ex:
+            log_err(logger, "MemCache Set(key: {}) => {}".format(key, ex))
+
     def updateCache(self, service, url, new_data, new_data_dt):
         """
         :param new_data: a string representation of the data
@@ -48,40 +71,32 @@ class MemcachedCache(object):
         :raise MemcachedException: if update failed
         """
         key = self._get_key(service, url)
-
-        # clear existing data
+        cdata, time_to_store = self._make_cache_data(
+            service, url, new_data, {}, 200, new_data_dt)
         try:
             value = self.client.get(key)
             if value:
                 data = pickle.loads(value, encoding="utf8")
                 if "time_stamp" in data:
                     cached_data_dt = parse(data["time_stamp"])
-                    if new_data_dt > cached_data_dt:
-                        self.client.delete(key)
-                        # may raise MemcachedException
-                        logger.info(
-                            "IN cache (key: {}), older DELETE".format(key))
-                    else:
-                        logger.info(
-                            "IN cache (key: {}), newer KEEP".format(key))
+                    if new_data_dt <= cached_data_dt:
+                        log_info(logger, "IN cache (key: {})".format(key))
                         return
-            else:
-                logger.info("NOT IN cache (key: {})".format(key))
-
+                # replace existing value in cache
+                self.client.replace(key, cdata, time=time_to_store)
+                log_info(logger, "MemCache replace(key: {})".format(key))
+                return
         except MemcachedException as ex:
-            logger.error(
-                "Clear existing data (key: {}) ==> {}".format(key, str(ex)))
-            return
+            log_err(logger, "MemCache replace(key: {}) => {}".format(key, ex))
+            raise
 
-        # store new value in cache
-        cdata, time_to_store = self._make_cache_data(
-            service, url, new_data, {}, 200, new_data_dt)
-
-        self.client.set(key, cdata, time=time_to_store)
-        # may raise MemcachedException
-        logger.info(
-            "MemCached SET (key {}) for {:d} seconds".format(
-                key, time_to_store))
+        # not in cache
+        try:
+            self.client.set(key, cdata, time=time_to_store)
+            log_info(logger, "MemCache Set(key {})".format(key))
+        except MemcachedException as ex:
+            log_err(logger, "MemCache Set(key: {}) => {}".format(key, ex))
+            raise
 
     def _make_cache_data(self, service, url, data_to_cache,
                          header_data, status, time_stamp):
@@ -92,25 +107,6 @@ class MemcachedCache(object):
                 }
         time_to_store = self.get_cache_expiration_time(service, url)
         return pickle.dumps(data), time_to_store
-
-    def processResponse(self, service, url, response):
-        header_data = {}
-        for header in response.headers:
-            header_data[header] = response.getheader(header)
-
-        key = self._get_key(service, url)
-        cdata, time_to_store = self._make_cache_data(service, url,
-                                                     response.data,
-                                                     header_data,
-                                                     response.status,
-                                                     timezone.now())
-        try:
-            self.client.set(key, cdata, time=time_to_store)
-            logger.info("MemCached set with key '{}', {:d} seconds".format(
-                key, time_to_store))
-        except bmemcached.exceptions.MemcachedException as ex:
-            logger.error("set (key: {}) ==> {}".format(key, str(ex)))
-        return
 
     def get_cache_expiration_time(self, service, url):
         # Over-ride this to define your own.
@@ -132,5 +128,5 @@ class MemcachedCache(object):
         username = getattr(settings, "RESTCLIENTS_MEMCACHED_USER", None)
         password = getattr(settings, "RESTCLIENTS_MEMCACHED_PASS", None)
 
-        self.client = bmemcached.Client(servers, username, password)
+        self.client = Client(servers, username, password)
         MemcachedCache._memcached_cache[thread_id] = self.client
