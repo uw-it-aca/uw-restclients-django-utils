@@ -2,7 +2,7 @@
 Contains memcached cache implementations
 """
 
-import bmemcached
+from bmemcached import Client
 from bmemcached.exceptions import MemcachedException
 import logging
 import pickle
@@ -27,8 +27,8 @@ class MemcachedCache(object):
         try:
             data = self.client.get(key)
         except MemcachedException as ex:
-            log_err(logger, "Get (key: {}) => {}".format(key, ex))
-            return
+            log_err(logger, "getCache(key: {}) => {}".format(key, ex))
+            return None
 
         if not data:
             return None
@@ -41,16 +41,8 @@ class MemcachedCache(object):
 
         return {"response": response}
 
-    def updateCache(self, service, url, new_data, new_data_dt):
-        """
-        :param new_data: a string representation of the data
-        :param new_data_dt: a timezone aware datetime object giving
-                the timestamp of the new_data
-        :raise MemcachedException: if update failed
-        """
+    def deleteCache(self, service, url):
         key = self._get_key(service, url)
-
-        # clear existing data
         try:
             value = self.client.get(key)
             if value:
@@ -70,11 +62,18 @@ class MemcachedCache(object):
                 logger.debug("NOT IN cache (key: {})".format(key))
 
         except MemcachedException as ex:
-            log_err(
-                logger,
-                "Clear existing data (key: {}) ==> {}".format(key, ex))
-            return
+            log_err(logger, "Delete(key: {}) ==> {}".format(key, ex))
 
+    def updateCache(self, service, url, new_data, new_data_dt):
+        """
+        :param new_data: a string representation of the data
+        :param new_data_dt: a timezone aware datetime object giving
+                the timestamp of the new_data
+        :raise MemcachedException: if update failed
+        """
+        self.deleteCache(service, url)
+
+        key = self._get_key(service, url)
         # store new value in cache
         cdata, time_to_store = self._make_cache_data(
             service, url, new_data, {}, 200, new_data_dt)
@@ -110,7 +109,7 @@ class MemcachedCache(object):
             self.client.set(key, cdata, time=time_to_store)
             logger.debug("MemCached set with key '{}', {:d} seconds".format(
                 key, time_to_store))
-        except bmemcached.exceptions.MemcachedException as ex:
+        except MemcachedException as ex:
             log_err(logger, "set (key: {}) ==> {}".format(key, ex))
         return
 
@@ -134,5 +133,5 @@ class MemcachedCache(object):
         username = getattr(settings, "RESTCLIENTS_MEMCACHED_USER", None)
         password = getattr(settings, "RESTCLIENTS_MEMCACHED_PASS", None)
 
-        self.client = bmemcached.Client(servers, username, password)
+        self.client = Client(servers, username, password)
         MemcachedCache._memcached_cache[thread_id] = self.client

@@ -5,16 +5,21 @@ from django.test import TestCase
 from django.utils import timezone
 from restclients_core.models import MockHTTP
 from bmemcached import Client
-from bmemcached.exceptions import MemcachedException
 from rc_django.cache_implementation.memcache import MemcachedCache
 
 
 class MockClient(Client):
+    def __init__(self):
+        super(MockClient, self).__init__())
+
     def get(self, key, get_cas=False):
-        raise MemcachedException("err", 400)
+        raise MemcachedException
+
+    def delete(self, key, cas=0):
+        raise MemcachedException
 
     def set(self, key, value, time=0, compress_level=-1):
-        raise MemcachedException("err", 400)
+        raise MemcachedException
 
 
 @skipIf(not getattr(settings, 'RESTCLIENTS_MEMCACHED_SERVERS', None),
@@ -24,7 +29,7 @@ class MemcachedCacheTest(TestCase):
         cache = MemcachedCache()
         cache.client.flush_all()
 
-    def test_cacheGet(self):
+    def test_cacheGet(self, mock):
         cache = MemcachedCache()
         key = cache._get_key('mem', '/same')
         self.assertEquals(key, "mem-/same")
@@ -42,7 +47,7 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, '{"data": "Body Content"}')
 
-    def test_cacheGet_err(self):
+    def test_cacheGet_err(self, mock):
         cache = MemcachedCache()
         cache.client = MockClient()
         cache.getCache('mem', '/same', {})
@@ -72,7 +77,7 @@ class MemcachedCacheTest(TestCase):
     def test_updateCache_err(self):
         cache = MemcachedCache()
         cache.client = MockClient()
-        cache.updateCache('mem', '/same', '{}', timezone.now())
+        cache.updateCache('mem', '/same', '{"data": "Content3"}', time1)
 
     def test_processResponse(self):
         mock_resp = MockHTTP()
@@ -94,7 +99,6 @@ class MemcachedCacheTest(TestCase):
         mock_resp.status = 200
         mock_resp.data = "Content4"
         mock_resp.headers = {"Content-type": "text/html"}
-        cache = MemcachedCache()
         cache.client = MockClient()
         cache.processResponse('mem', '/same1', mock_resp)
 
