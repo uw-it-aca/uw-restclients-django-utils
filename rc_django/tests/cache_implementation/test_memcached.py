@@ -33,10 +33,15 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, '{"data": "Body Content"}')
 
+        # delete existing entry
         self.assertTrue(cache.deleteCache('mem', '/same'))
+        # second delete
+        self.assertTrue(cache.deleteCache('mem', '/same') is False)
 
         cache.client = MockClient1()
+        # test get err
         cache.getCache('mem', '/same', {})
+        # test delete err
         self.assertFalse(cache.deleteCache('mem', '/same'))
 
     def test_updateCache(self):
