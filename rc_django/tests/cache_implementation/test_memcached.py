@@ -66,12 +66,16 @@ class MemcachedCacheTest(TestCase):
 
         # test replace err
         cache.client = MockClient2()
-        cache.updateCache('mem', '/same', '{}', timezone.now())
+        self.assertRaises(MemcachedException,
+                          cache.updateCache,
+                          'mem', '/same', '{}', timezone.now())
 
         # test set err
         cache = MemcachedCache()
         cache.client = MockClient2()
-        cache.updateCache('mem', '/same', '{}', timezone.now())
+        self.assertRaises(MemcachedException,
+                          cache.updateCache,
+                          'mem', '/same', '{}', timezone.now())
 
     def test_processResponse(self):
         mock_resp = MockHTTP()
