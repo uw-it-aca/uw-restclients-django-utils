@@ -24,10 +24,9 @@ setup(
     include_package_data=True,
     install_requires=[
         'Django>=2.1,<3.0',
-        'UW-RestClients-Core>1.0,<2.0',
-        'django-userservice>3.1,<4.0',
+        'UW-RestClients-Core<2.0',
+        'django-userservice<4.0',
         'python-binary-memcached',
-        'python-dateutil',
     ],
     license='Apache License, Version 2.0',
     description=('UW-RestClients-Django-Utils'),

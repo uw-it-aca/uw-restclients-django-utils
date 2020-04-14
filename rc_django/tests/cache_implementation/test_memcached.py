@@ -4,17 +4,8 @@ from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
 from restclients_core.models import MockHTTP
-from bmemcached import Client
-from bmemcached.exceptions import MemcachedException
-from rc_django.cache_implementation.memcache import MemcachedCache
-
-
-class MockClient(Client):
-    def get(self, key, get_cas=False):
-        raise MemcachedException("err", 400)
-
-    def set(self, key, value, time=0, compress_level=-1):
-        raise MemcachedException("err", 400)
+from rc_django.cache_implementation.memcache import (
+    MemcachedCache, Client, MemcachedException)
 
 
 @skipIf(not getattr(settings, 'RESTCLIENTS_MEMCACHED_SERVERS', None),
@@ -42,10 +33,11 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, '{"data": "Body Content"}')
 
-    def test_cacheGet_err(self):
-        cache = MemcachedCache()
+        self.assertTrue(cache.deleteCache('mem', '/same'))
+
         cache.client = MockClient()
         cache.getCache('mem', '/same', {})
+        self.assertFalse(cache.deleteCache('mem', '/same'))
 
     def test_updateCache(self):
         cache = MemcachedCache()
@@ -69,8 +61,6 @@ class MemcachedCacheTest(TestCase):
         response = hit["response"]
         self.assertEquals(response.data, '{"data": "Content2"}')
 
-    def test_updateCache_err(self):
-        cache = MemcachedCache()
         cache.client = MockClient()
         cache.updateCache('mem', '/same', '{}', timezone.now())
 
@@ -123,3 +113,18 @@ class MemcachedCacheTest(TestCase):
         response = hit["response"]
         self.assertEquals(response.headers, {})
         self.assertEquals(response.status, 200)
+
+
+class MockClient(Client):
+
+    def delete(self, key):
+        raise MemcachedException("err", 400)
+
+    def get(self, key, get_cas=False):
+        raise MemcachedException("err", 400)
+
+    def replace(self, key, value, time=0, compress_level=-1):
+        raise MemcachedException("err", 400)
+
+    def set(self, key, value, time=0, compress_level=-1):
+        raise MemcachedException("err", 400)

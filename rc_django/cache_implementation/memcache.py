@@ -44,45 +44,44 @@ class MemcachedCache(object):
     def deleteCache(self, service, url):
         key = self._get_key(service, url)
         try:
-            value = self.client.get(key)
-            if value:
-                data = pickle.loads(value, encoding="utf8")
-                if "time_stamp" in data:
-                    cached_data_dt = parse(data["time_stamp"])
-                    if new_data_dt > cached_data_dt:
-                        self.client.delete(key)
-                        # may raise MemcachedException
-                        logger.debug(
-                            "IN cache (key: {}), older DELETE".format(key))
-                    else:
-                        logger.debug(
-                            "IN cache (key: {}), newer KEEP".format(key))
-                        return
-            else:
-                logger.debug("NOT IN cache (key: {})".format(key))
-
+            return self.client.delete(key)
         except MemcachedException as ex:
-            log_err(logger, "Delete(key: {}) ==> {}".format(key, ex))
+            log_err(logger, "Delete(key: {}) => {}".format(key, ex))
+            return False
 
     def updateCache(self, service, url, new_data, new_data_dt):
         """
         :param new_data: a string representation of the data
         :param new_data_dt: a timezone aware datetime object giving
                 the timestamp of the new_data
-        :raise MemcachedException: if update failed
         """
-        self.deleteCache(service, url)
-
         key = self._get_key(service, url)
-        # store new value in cache
         cdata, time_to_store = self._make_cache_data(
             service, url, new_data, {}, 200, new_data_dt)
 
-        self.client.set(key, cdata, time=time_to_store)
-        # may raise MemcachedException
-        logger.debug(
-            "MemCached SET (key {}) for {:d} seconds".format(
+        value = self.client.get(key)
+        if value:
+            data = pickle.loads(value, encoding="utf8")
+            if "time_stamp" in data:
+                cached_data_dt = parse(data["time_stamp"])
+                if new_data_dt <= cached_data_dt:
+                    logger.debug("IN cache (key: {}), KEEP".format(key))
+                    return
+            # replace existing value in cache
+            try:
+                self.client.replace(key, cdata, time=time_to_store)
+                logger.debug("IN cache (key: {}), REPLACE".format(key))
+            except MemcachedException as ex:
+                log_err(logger, "Replace(key: {}) => {}".format(key, ex))
+            return
+
+        # store new value in cache
+        try:
+            self.client.set(key, cdata, time=time_to_store)
+            logger.debug("MemCached SET (key {}) for {:d} seconds".format(
                 key, time_to_store))
+        except MemcachedException as ex:
+            log_err(logger, "Set(key: {}) => {}".format(key, ex))
 
     def _make_cache_data(self, service, url, data_to_cache,
                          header_data, status, time_stamp):
@@ -100,11 +99,9 @@ class MemcachedCache(object):
             header_data[header] = response.getheader(header)
 
         key = self._get_key(service, url)
-        cdata, time_to_store = self._make_cache_data(service, url,
-                                                     response.data,
-                                                     header_data,
-                                                     response.status,
-                                                     timezone.now())
+        cdata, time_to_store = self._make_cache_data(
+            service, url, response.data, header_data,
+            response.status, timezone.now())
         try:
             self.client.set(key, cdata, time=time_to_store)
             logger.debug("MemCached set with key '{}', {:d} seconds".format(
