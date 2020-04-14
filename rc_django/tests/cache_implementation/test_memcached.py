@@ -91,7 +91,7 @@ class MemcachedCacheTest(TestCase):
         mock_resp.data = "Content4"
         mock_resp.headers = {"Content-type": "text/html"}
         cache = MemcachedCache()
-        cache.client = MockClient()
+        cache.client = MockClient2()
         cache.processResponse('mem', '/same1', mock_resp)
 
     def test_binary_processResponse(self):
