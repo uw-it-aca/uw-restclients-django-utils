@@ -22,6 +22,12 @@ class TimedCache(object):
     This is a base class for Cache implementations that caches for
     lengths of time.
     """
+    def deleteCache(self, service, url):
+        rs = CacheEntryTimed.objects.find_by_service_and_url(service, url)
+        if len(rs):
+            return rs.delete()
+        return None
+
     def _response_from_cache(self, service, url, headers, max_age_in_seconds,
                              max_error_age=60 * 5):
 
