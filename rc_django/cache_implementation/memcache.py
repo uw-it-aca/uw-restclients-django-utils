@@ -68,7 +68,7 @@ class MemcachedCache(object):
             # not in cache
             try:
                 self.client.set(key, cdata, time=time_to_store)
-                logger.debug("MemCached SET (key {}) for {:d} seconds".format(
+                logger.debug("MemCached Set(key {}) for {:d} seconds".format(
                     key, time_to_store))
             except MemcachedException as ex:
                 log_err(logger, "MemCached Set(key: {}) => {}".format(key, ex))
@@ -108,10 +108,10 @@ class MemcachedCache(object):
             response.status, timezone.now())
         try:
             self.client.set(key, cdata, time=time_to_store)
-            logger.debug("MemCached set with key '{}', {:d} seconds".format(
+            logger.debug("MemCached Set(key: {}) for {:d} seconds".format(
                 key, time_to_store))
         except MemcachedException as ex:
-            log_err(logger, "set (key: {}) ==> {}".format(key, ex))
+            log_err(logger, "MemCached Set(key: {}) ==> {}".format(key, ex))
         return
 
     def get_cache_expiration_time(self, service, url):
