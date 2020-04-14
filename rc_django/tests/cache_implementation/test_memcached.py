@@ -71,8 +71,7 @@ class MemcachedCacheTest(TestCase):
                           'mem', '/same', '{}', timezone.now())
 
         # test set err
-        cache = MemcachedCache()
-        cache.client = MockClient2()
+        cache.deleteCache('mem', '/same')
         self.assertRaises(MemcachedException,
                           cache.updateCache,
                           'mem', '/same', '{}', timezone.now())

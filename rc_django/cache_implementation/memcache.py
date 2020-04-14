@@ -61,7 +61,7 @@ class MemcachedCache(object):
             self.client.set(key, cdata, time=time_to_store)
             log_info(logger, "MemCache Set(key: {})".format(key))
         except MemcachedException as ex:
-            log_err(logger, "MemCache Set(key: {}) ==> {}".format(key, ex))
+            log_err(logger, "MemCache Set(key: {}) => {}".format(key, ex))
 
     def updateCache(self, service, url, new_data, new_data_dt):
         """
