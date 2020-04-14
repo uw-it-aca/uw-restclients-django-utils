@@ -75,6 +75,7 @@ class TimeCacheTest(TestCase):
         cache = TimeSimpleCache()
         response = cache.getCache('simple', '/same', {})
         self.assertEquals(response, None)
+        self.assertIsNone(cache.deleteCache('simple', '/same'))
 
         client = SIMPLE_DAO()
         response = client.getURL('/same', {})
@@ -88,6 +89,8 @@ class TimeCacheTest(TestCase):
 
         self.assertEquals(response.status, 200)
         self.assertEquals(response.data, "Body Content")
+
+        self.assertIsNotNone(cache.deleteCache('simple', '/same'))
 
     def test_4hour_cache(self):
         # Check initial state
