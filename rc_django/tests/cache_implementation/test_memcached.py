@@ -35,7 +35,7 @@ class MemcachedCacheTest(TestCase):
 
         self.assertTrue(cache.deleteCache('mem', '/same'))
 
-        cache.client = MockClient()
+        cache.client = MockClient1()
         cache.getCache('mem', '/same', {})
         self.assertFalse(cache.deleteCache('mem', '/same'))
 
@@ -61,7 +61,13 @@ class MemcachedCacheTest(TestCase):
         response = hit["response"]
         self.assertEquals(response.data, '{"data": "Content2"}')
 
-        cache.client = MockClient()
+        # test replace err
+        cache.client = MockClient2()
+        cache.updateCache('mem', '/same', '{}', timezone.now())
+
+        # test set err
+        cache = MemcachedCache()
+        cache.client = MockClient2()
         cache.updateCache('mem', '/same', '{}', timezone.now())
 
     def test_processResponse(self):
@@ -115,13 +121,16 @@ class MemcachedCacheTest(TestCase):
         self.assertEquals(response.status, 200)
 
 
-class MockClient(Client):
+class MockClient1(Client):
 
     def delete(self, key):
         raise MemcachedException("err", 400)
 
     def get(self, key, get_cas=False):
         raise MemcachedException("err", 400)
+
+
+class MockClient2(Client):
 
     def replace(self, key, value, time=0, compress_level=-1):
         raise MemcachedException("err", 400)
