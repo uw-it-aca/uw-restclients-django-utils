@@ -23,10 +23,11 @@ class MemcachedCacheTest(TestCase):
         data = cache.getCache('mem', '/same', {})
         self.assertIsNone(data)
 
-        cdata, time_to_store = cache._make_cache_data(
+        expires = cache.get_cache_expiration_time('mem', '/same')
+        cdata = cache._make_cache_data(
             'mem', '/same', json.dumps({"data": "Body Content"}),
             {}, 200, timezone.now())
-        cache.client.set(key, cdata, time_to_store)
+        cache.client.set(key, cdata, time=expires)
 
         hit = cache.getCache('mem', '/same', {})
         response = hit["response"]
