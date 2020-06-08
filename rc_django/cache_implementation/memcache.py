@@ -30,6 +30,10 @@ class MemcachedCache(object):
             log_err(logger, "MemCache Delete(key: {}) => {}".format(key, ex))
 
     def getCache(self, service, url, headers):
+        expire_seconds = self.get_cache_expiration_time(service, url)
+        if expire_seconds is None:
+            return
+
         key = self._get_key(service, url)
         try:
             data = self.client.get(key)
@@ -38,7 +42,7 @@ class MemcachedCache(object):
             return
 
         if not data:
-            return None
+            return
 
         values = pickle.loads(data, encoding="utf8")
         response = MockHTTP()
@@ -49,16 +53,20 @@ class MemcachedCache(object):
         return {"response": response}
 
     def processResponse(self, service, url, response):
+        expire_seconds = self.get_cache_expiration_time(service, url)
+        if expire_seconds is None:
+            return
+
         header_data = {}
         for header in response.headers:
             header_data[header] = response.getheader(header)
 
         key = self._get_key(service, url)
-        cdata, time_to_store = self._make_cache_data(
-            service, url, response.data, header_data,
-            response.status, timezone.now())
+        cdata = self._make_cache_data(
+            service, url, response.data, header_data, response.status,
+            timezone.now())
         try:
-            self.client.set(key, cdata, time=time_to_store)
+            self.client.set(key, cdata, time=expire_seconds)
             log_info(logger, "MemCache Set(key: {})".format(key))
         except MemcachedException as ex:
             log_err(logger, "MemCache Set(key: {}) => {}".format(key, ex))
@@ -70,8 +78,12 @@ class MemcachedCache(object):
                 the timestamp of the new_data
         :raise MemcachedException: if update failed
         """
+        expire_seconds = self.get_cache_expiration_time(service, url)
+        if expire_seconds is None:
+            return
+
         key = self._get_key(service, url)
-        cdata, time_to_store = self._make_cache_data(
+        cdata = self._make_cache_data(
             service, url, new_data, {}, 200, new_data_dt)
         try:
             value = self.client.get(key)
@@ -83,7 +95,7 @@ class MemcachedCache(object):
                         log_info(logger, "IN cache (key: {})".format(key))
                         return
                 # replace existing value in cache
-                self.client.replace(key, cdata, time=time_to_store)
+                self.client.replace(key, cdata, time=expire_seconds)
                 log_info(logger, "MemCache replace(key: {})".format(key))
                 return
         except MemcachedException as ex:
@@ -92,7 +104,7 @@ class MemcachedCache(object):
 
         # not in cache
         try:
-            self.client.set(key, cdata, time=time_to_store)
+            self.client.set(key, cdata, time=expire_seconds)
             log_info(logger, "MemCache Set(key {})".format(key))
         except MemcachedException as ex:
             log_err(logger, "MemCache Set(key: {}) => {}".format(key, ex))
@@ -100,16 +112,24 @@ class MemcachedCache(object):
 
     def _make_cache_data(self, service, url, data_to_cache,
                          header_data, status, time_stamp):
-        data = {"status": status,
-                "headers": header_data,
-                "data": data_to_cache,
-                "time_stamp": time_stamp.isoformat()
-                }
-        time_to_store = self.get_cache_expiration_time(service, url)
-        return pickle.dumps(data), time_to_store
+        return pickle.dumps({
+            "status": status,
+            "headers": header_data,
+            "data": data_to_cache,
+            "time_stamp": time_stamp.isoformat(),
+        })
 
+    """
+    Returns an integer representing seconds until a document expires,
+    overridden to set per-URL expiration times.  The default is 4 hours.
+
+    Following memcached documentation:
+      # Can be set from 0, meaning "never expire", to 30 days (60*60*24*30).
+      # Any time higher than 30 days is interpreted as a unix timestamp date.
+
+    A value of None indicates "Do not cache", and will not use the cache.
+    """
     def get_cache_expiration_time(self, service, url):
-        # Over-ride this to define your own.
         return 60 * 60 * 4
 
     def _get_key(self, service, url):
