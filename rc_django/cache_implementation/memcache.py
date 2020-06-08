@@ -31,7 +31,7 @@ class MemcachedCache(object):
 
     def getCache(self, service, url, headers):
         expire_seconds = self.get_cache_expiration_time(service, url)
-        if not expire_seconds:
+        if expire_seconds is None:
             return
 
         key = self._get_key(service, url)
@@ -54,7 +54,7 @@ class MemcachedCache(object):
 
     def processResponse(self, service, url, response):
         expire_seconds = self.get_cache_expiration_time(service, url)
-        if not expire_seconds:
+        if expire_seconds is None:
             return
 
         header_data = {}
@@ -79,8 +79,9 @@ class MemcachedCache(object):
         :raise MemcachedException: if update failed
         """
         expire_seconds = self.get_cache_expiration_time(service, url)
-        if not expire_seconds:
+        if expire_seconds is None:
             return
+
         key = self._get_key(service, url)
         cdata = self._make_cache_data(
             service, url, new_data, {}, 200, new_data_dt)
@@ -118,8 +119,17 @@ class MemcachedCache(object):
             "time_stamp": time_stamp.isoformat(),
         })
 
+    """
+    Returns an integer representing seconds until a document expires,
+    overridden to set per-URL expiration times.  The default is 4 hours.
+
+    Following memcached documentation:
+      # Can be set from 0, meaning "never expire", to 30 days (60*60*24*30).
+      # Any time higher than 30 days is interpreted as a unix timestamp date.
+
+    A value of None indicates "Do not cache", and will not use the cache.
+    """
     def get_cache_expiration_time(self, service, url):
-        # Over-ride this to define your own.
         return 60 * 60 * 4
 
     def _get_key(self, service, url):
