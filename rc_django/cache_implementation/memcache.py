@@ -44,7 +44,7 @@ class MemcachedCache(object):
         if not data:
             return
 
-        values = pickle.loads(data, encoding="utf8")
+        values = self._get_cache_data(data)
         response = MockHTTP()
         response.headers = values["headers"]
         response.status = values["status"]
@@ -88,7 +88,7 @@ class MemcachedCache(object):
         try:
             value = self.client.get(key)
             if value:
-                data = pickle.loads(value, encoding="utf8")
+                data = self._get_cache_data(value)
                 if "time_stamp" in data:
                     cached_data_dt = parse(data["time_stamp"])
                     if new_data_dt <= cached_data_dt:
@@ -109,6 +109,9 @@ class MemcachedCache(object):
         except MemcachedException as ex:
             log_err(logger, "MemCache Set(key: {}) => {}".format(key, ex))
             raise
+
+    def _get_cache_data(self, data_from_cache):
+        return pickle.loads(data_from_cache, encoding="utf8")
 
     def _make_cache_data(self, service, url, data_to_cache,
                          header_data, status, time_stamp):
