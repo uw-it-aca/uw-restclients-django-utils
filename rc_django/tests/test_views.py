@@ -7,9 +7,11 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.models import User
 from django.urls import reverse
 from restclients_core.dao import DAO, MockDAO
+from restclients_core.exceptions import DataFailureException
 from restclients_core.models import MockHTTP
 from rc_django.views import (
-    proxy, clean_self_closing_divs, format_json, format_html, get_dao_instance)
+    proxy, clean_self_closing_divs, format_json, format_html, get_dao_instance,
+    get_mock_response, format_search_params)
 from userservice.user import UserServiceMiddleware
 from unittest import skipIf
 
@@ -166,6 +168,11 @@ class ViewTest(TestCase):
         html = b'<STYLE>h1 {color:red;}</STYLE><a href="/api/v1/test"></a>'
         self.assertEqual(format_html(service, html), output)
 
+    def test_format_search_params(self):
+        url = 'https://test.edu/api/test?a=one&b=two&c=one%20two'
+        self.assertEqual(format_search_params(url), {
+            'a': 'one', 'b': 'two', 'c': 'one two'})
+
     @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
             "restclients urls not configured")
     def test_support_links(self):
@@ -198,3 +205,10 @@ class ViewTest(TestCase):
 
         # Missing service
         self.assertRaises(ImportError, get_dao_instance, "fake")
+
+    def test_get_mock_response(self):
+        dfe = DataFailureException('/', 503, 'Service Unavailable')
+        response = get_mock_response(dfe)
+        self.assertIsInstance(response, MockHTTP)
+        self.assertEqual(response.status, 503)
+        self.assertEqual(response.data, 'Service Unavailable')
