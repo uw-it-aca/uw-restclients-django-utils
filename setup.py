@@ -26,7 +26,6 @@ setup(
         'Django>=2.1,<3.0',
         'UW-RestClients-Core<2.0',
         'django-userservice<4.0',
-        'python-binary-memcached',
     ],
     license='Apache License, Version 2.0',
     description=('UW-RestClients-Django-Utils'),
