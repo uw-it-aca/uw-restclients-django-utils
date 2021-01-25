@@ -1,7 +1,7 @@
 # Django utilities for enhancing UW REST Clients
 
 [![Build Status](https://github.com/uw-it-aca/uw-restclients-django-utils/workflows/tests/badge.svg?branch=master)](https://github.com/uw-it-aca/uw-restclients-django-utils/actions)
-[![Coverage Status](https://coveralls.io/repos/uw-it-aca/uw-restclients-django-utils/badge.png?branch=master)](https://coveralls.io/r/uw-it-aca/uw-restclients-django-utils?branch=master)
+[![Coverage Status](https://coveralls.io/repos/uw-it-aca/uw-restclients-django-utils/badge.svg?branch=master)](https://coveralls.io/r/uw-it-aca/uw-restclients-django-utils?branch=master)
 [![PyPi Version](https://img.shields.io/pypi/v/uw-restclients-django-utils.svg)](https://pypi.python.org/pypi/uw-restclients-django-utils)
 ![Python versions](https://img.shields.io/pypi/pyversions/uw-restclients-django-utils.svg)
 
