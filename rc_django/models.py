@@ -1,53 +1,5 @@
 import json
 from django.db import models
-from hashlib import sha1
-
-
-class CacheEntry(models.Model):
-    service = models.CharField(max_length=50, db_index=True)
-    url = models.TextField()
-    url_key = models.SlugField(max_length=40, unique=True)
-    status = models.PositiveIntegerField()
-    content = models.TextField()
-    headers = models.TextField()
-
-    class Meta:
-        app_label = 'rc_django'
-        db_table = 'restclients_cacheentry'
-        unique_together = ('service', 'url_key')
-
-    def getHeaders(self):
-        return json.loads(self.headers)
-
-    def save(self, *args, **kwargs):
-        self.headers = json.dumps(self.headers)
-        self.url_key = self.get_url_key(self.url)
-        super(CacheEntry, self).save(*args, **kwargs)
-
-    @staticmethod
-    def get_url_key(url):
-        return sha1(url.encode('utf-8')).hexdigest()
-
-
-class CacheEntryTimedManager(models.Manager):
-    def find_nonexpired_by_service_and_url(self, service, url, time_limit):
-        return super(CacheEntryTimedManager, self).get_queryset().filter(
-            service=service, url_key=CacheEntry.get_url_key(url),
-            time_saved__gte=time_limit)
-
-    def find_by_service_and_url(self, service, url):
-        return super(CacheEntryTimedManager, self).get_queryset().filter(
-            service=service, url_key=CacheEntry.get_url_key(url))
-
-
-class CacheEntryTimed(CacheEntry):
-    time_saved = models.DateTimeField()
-
-    objects = CacheEntryTimedManager()
-
-    class Meta:
-        app_label = 'rc_django'
-        db_table = 'restclients_cacheentrytimed'
 
 
 class DegradePerformance(object):
