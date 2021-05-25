@@ -96,14 +96,14 @@ def proxy(request, service, url):
         headers["X-UW-Act-as"] = actual_user
     elif service == "myplan":
         headers["X-UW-Act-as"] = actual_user
-
-        logger.info("Myplan Proxy inputs: {}".format(json.dumps(
-            request.GET)))
-        url = "/student/api/plan/v1/{},{},1,{}".format(
-            request.GET.get("year"),
-            request.GET.get("quarter"),
-            request.GET.get("uwregid")
-        )
+        if "plan?" in url:
+            logger.info("Myplan Proxy inputs: {}".format(json.dumps(
+                request.GET)))
+            url = "/student/api/plan/v1/{},{},1,{}".format(
+                request.GET.get("year"),
+                request.GET.get("quarter"),
+                request.GET.get("uwregid")
+            )
 
     elif service == "calendar":
         use_pre = True
