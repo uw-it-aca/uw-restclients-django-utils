@@ -97,9 +97,9 @@ def proxy(request, service, url):
     elif service == "myplan":
         headers["X-UW-Act-as"] = actual_user
         url = "/student/api/plan/v1/{},{},1,{}".format(
-            request.GET["year"],
-            request.GET["quarter"],
-            request.GET["uwregid"]
+            request.GET.get("year"),
+            request.GET.get("quarter"),
+            request.GET.get("uwregid")
         )
         logger.info("Myplan Proxy URL: {}".format(url))
     elif service == "calendar":
