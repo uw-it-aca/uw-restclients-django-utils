@@ -2,18 +2,22 @@
 <form method="get" action="search">
   <div>
     <label for="uwregid">UW RegID:</label>
-    <input class="uwregid" id="uwregid" name="uwregid"
-        value="{{search.uwregid}}" size="50" type="text">
+    <input id="uwregid" name="uwregid"
+        value="{{search.uwregid}}" size="40" type="text">
   </div>
   <div>
     <label for="year">year:</label>
-    <input class="year" id="year" name="year"
-      value="{{search.year}}" type="text">
+    <input id="year" name="year"
+      value="{{search.year}}" type="number" maxlength="4">
   </div>
   <div>
     <label for="quarter">quarter:</label>
-    <input class="quarter" id="quarter" name="quarter"
-      value="{{search.quarter}}" type="text">
+    <select id="quarter" name="quarter" maxlength="6">
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="autumn">Autumn</option>
+            <option value="winter">Winter</option>
+    </select>
   </div>
   <div>
     <input value="Submit" type="submit">
