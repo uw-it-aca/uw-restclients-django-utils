@@ -101,6 +101,13 @@ def proxy(request, service, url):
                 request.GET["quarter"],
                 request.GET["uwregid"])
             has_search_api = False
+    elif service == "book":
+        headers["X-UW-Act-as"] = actual_user
+        if "store?" in url:
+            url = "/uw/json_utf8.ubs?quarter={}&sln1=${}&returnlink=t".format(
+                request.GET["quarter"],
+                request.GET["sln1"])
+            has_search_api = False
     elif service == "hfs":
         headers["X-UW-Act-as"] = actual_user
         if "accounts?" in url:
