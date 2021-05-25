@@ -94,6 +94,15 @@ def proxy(request, service, url):
                 request.GET["section_id"])
     elif service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
+    elif service == "myplan":
+        headers["X-UW-Act-as"] = actual_user
+        url_prefix = re.sub(r'/search?.*$', "", url)
+        url = "{}/{},{},1,{}".format(
+            url_prefix,
+            request.GET["year"],
+            request.GET["quarter"],
+            request.GET["uwregid"]
+        )
     elif service == "calendar":
         use_pre = True
 
