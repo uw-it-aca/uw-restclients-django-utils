@@ -72,7 +72,6 @@ def proxy(request, service, url):
     use_search_api = True
     use_pre = False
     headers = {}
-    logger.info("ORIG {} url={}".format(service, url))
 
     if re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
@@ -81,6 +80,8 @@ def proxy(request, service, url):
             index += 1
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
+    elif service == "sws" or service == "gws":
+        headers["X-UW-Act-as"] = actual_user
     elif service == "libcurrics":
         if "?campus=" in url:
             url = url.replace("?campus=", "/")
@@ -92,8 +93,6 @@ def proxy(request, service, url):
                 request.GET["course_number"],
                 request.GET["section_id"])
             use_search_api = False
-    elif service == "sws" or service == "gws":
-        headers["X-UW-Act-as"] = actual_user
     elif service == "myplan":
         headers["X-UW-Act-as"] = actual_user
         if "plan" in url and request.GET:
@@ -146,7 +145,7 @@ def proxy(request, service, url):
         except UnicodeEncodeError as err:
             return HttpResponse(
                 'Bad URL param given to the restclients browser')
-    logger.info("PROXY url={}".format(url))
+
     response, start, end = get_response(request, service, url, headers, dao)
 
     is_image = False
