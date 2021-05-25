@@ -119,7 +119,7 @@ def proxy(request, service, url):
             url = "/mylibinfo/v1/?id={}&style=json".format(
                 request.GET["uwnetid"])
             has_search_api = False
-    elif service == "libraries":
+    elif service == "uwnetid":
         headers["X-UW-Act-as"] = actual_user
         if "password?" in url:
             url = "/nws/v1/uwnetid/{}/password".format(
