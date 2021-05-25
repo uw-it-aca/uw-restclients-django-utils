@@ -69,7 +69,7 @@ def get_mock_response(ex):
 def proxy(request, service, url):
     user_service = UserService()
     actual_user = user_service.get_original_user()
-
+    has_search_api = True
     use_pre = False
     headers = {}
 
@@ -84,27 +84,40 @@ def proxy(request, service, url):
         if "?campus=" in url:
             url = url.replace("?campus=", "/")
         elif "course?" in url:
-            url_prefix = re.sub(r'\?.*$', "", url)
-            url = "{}/{}/{}/{}/{}/{}".format(
-                url_prefix,
+            url = "/currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
                 request.GET["year"],
                 request.GET["quarter"],
                 request.GET["curriculum_abbr"],
                 request.GET["course_number"],
                 request.GET["section_id"])
+            has_search_api = False
     elif service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
     elif service == "myplan":
         headers["X-UW-Act-as"] = actual_user
         if "plan?" in url:
-            logger.info("Myplan Proxy inputs: {}".format(json.dumps(
-                request.GET)))
             url = "/student/api/plan/v1/{},{},1,{}".format(
-                request.GET.get("year"),
-                request.GET.get("quarter"),
-                request.GET.get("uwregid")
-            )
-
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["uwregid"])
+            has_search_api = False
+    elif service == "hfs":
+        headers["X-UW-Act-as"] = actual_user
+        if "accounts?" in url:
+            url = "/myuw/v1/{}".format(request.GET["uwnetid"])
+            has_search_api = False
+    elif service == "libraries":
+        headers["X-UW-Act-as"] = actual_user
+        if "accounts?" in url:
+            url = "/mylibinfo/v1/?id={}&style=json".format(
+                request.GET["uwnetid"])
+            has_search_api = False
+    elif service == "libraries":
+        headers["X-UW-Act-as"] = actual_user
+        if "password?" in url:
+            url = "/nws/v1/uwnetid/{}/password".format(
+                request.GET["uwnetid"])
+            has_search_api = False
     elif service == "calendar":
         use_pre = True
 
@@ -119,7 +132,7 @@ def proxy(request, service, url):
 
     url = "/{}".format(quote(url))
 
-    if request.GET:
+    if has_search_api and request.GET:
         try:
             url = "{}?{}".format(url, urlencode(request.GET))
         except UnicodeEncodeError as err:
