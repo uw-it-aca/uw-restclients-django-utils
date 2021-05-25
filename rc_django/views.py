@@ -72,6 +72,7 @@ def proxy(request, service, url):
     use_search_api = True
     use_pre = False
     headers = {}
+    logger.info("ORIG {} url={}".format(service, url))
 
     if re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
@@ -145,7 +146,7 @@ def proxy(request, service, url):
         except UnicodeEncodeError as err:
             return HttpResponse(
                 'Bad URL param given to the restclients browser')
-    logger.info("PROXY {}".format(url))
+    logger.info("PROXY url={}".format(url))
     response, start, end = get_response(request, service, url, headers, dao)
 
     is_image = False
