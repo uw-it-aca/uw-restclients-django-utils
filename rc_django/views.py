@@ -103,6 +103,7 @@ def proxy(request, service, url):
             request.GET["quarter"],
             request.GET["uwregid"]
         )
+        logger.info("Myplan Proxy URL: {}".format(url))
     elif service == "calendar":
         use_pre = True
 
