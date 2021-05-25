@@ -145,7 +145,7 @@ def proxy(request, service, url):
         except UnicodeEncodeError as err:
             return HttpResponse(
                 'Bad URL param given to the restclients browser')
-
+    logger.info("PROXY {}".format(url))
     response, start, end = get_response(request, service, url, headers, dao)
 
     is_image = False
