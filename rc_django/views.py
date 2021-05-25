@@ -96,9 +96,7 @@ def proxy(request, service, url):
         headers["X-UW-Act-as"] = actual_user
     elif service == "myplan":
         headers["X-UW-Act-as"] = actual_user
-        url_prefix = re.sub(r'/search?.*$', "", url)
-        url = "{}/{},{},1,{}".format(
-            url_prefix,
+        url = "/student/api/plan/v1/{},{},1,{}".format(
             request.GET["year"],
             request.GET["quarter"],
             request.GET["uwregid"]
