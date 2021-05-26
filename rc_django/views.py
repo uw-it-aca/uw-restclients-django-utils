@@ -83,8 +83,11 @@ def proxy(request, service, url):
     elif service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
     elif service == "pws":
-        if request.GET and ("person" in url or "entity" in url):
-            url = "identity/v2/{}".format(url)
+        if request.GET:
+            if "person" in url:
+                url = "identity/v2/person.json"
+            elif "entity" in url:
+                url = "identity/v2/entity.json"
     elif service == "libcurrics":
         if "?campus=" in url:
             url = url.replace("?campus=", "/")
