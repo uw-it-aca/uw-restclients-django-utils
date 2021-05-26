@@ -86,12 +86,6 @@ def proxy(request, service, url):
             url = "/student/v5/person/{}/advisers.json".format(
                 request.GET["uwregid"])
             use_search_api = False
-    elif service == "pws":
-        if request.GET:
-            if "person" in url:
-                url = "identity/v2/person.json"
-            elif "entity" in url:
-                url = "identity/v2/entity.json"
     elif service == "libcurrics":
         if "?campus=" in url:
             url = url.replace("?campus=", "/")

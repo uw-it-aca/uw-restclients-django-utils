@@ -4,7 +4,7 @@
         Entity Search
     </a> (Proxy)
 </h1>
-<form method="get" action="entity">
+<form method="get" action="entity.json">
     <div><label for="display_name">Display name:</label> <input class="display_name" id="display_name" name="display_name" value="{{search.display_name}}" size="50" type="text"></div>
     <div><label for="is_test_entity">Is test entity:</label> <input class="is_test_entity" id="is_test_entity" name="is_test_entity" value="true"{% if search.is_test_entity == "true" %} checked="checked"{% endif %} type="checkbox"></div>
     <div><label for="only_entities">Entities only:</label> <input class="only_entities" id="only_entities" name="only_entities" value="true"{% if search.only_entities == "true" %} checked="checked"{% endif %} type="checkbox"></div>
