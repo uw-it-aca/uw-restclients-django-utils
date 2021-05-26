@@ -82,6 +82,10 @@ def proxy(request, service, url):
             headers["Accept"] = "application/vnd.collection+json"
     elif service == "sws" or service == "gws":
         headers["X-UW-Act-as"] = actual_user
+        if "advisers" in url and request.GET:
+            url = "/student/v5/person/{}/advisers.json".format(
+                request.GET["uwregid"])
+            use_search_api = False
     elif service == "pws":
         if request.GET:
             if "person" in url:
