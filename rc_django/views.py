@@ -84,12 +84,12 @@ def proxy(request, service, url):
         headers["X-UW-Act-as"] = actual_user
     elif service == "pws":
         if request.GET and ("person" in url or "entity" in url):
-            url = "/identity/v2/{}".format(url)
+            url = "identity/v2/{}".format(url)
     elif service == "libcurrics":
         if "?campus=" in url:
             url = url.replace("?campus=", "/")
         elif "course" in url and request.GET:
-            url = "/currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
+            url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
                 request.GET["year"],
                 request.GET["quarter"],
                 request.GET["curriculum_abbr"],
@@ -99,7 +99,7 @@ def proxy(request, service, url):
     elif service == "myplan":
         headers["X-UW-Act-as"] = actual_user
         if "plan" in url and request.GET:
-            url = "/student/api/plan/v1/{},{},1,{}".format(
+            url = "student/api/plan/v1/{},{},1,{}".format(
                 request.GET["year"],
                 request.GET["quarter"],
                 request.GET["uwregid"])
@@ -107,25 +107,25 @@ def proxy(request, service, url):
     elif service == "book":
         headers["X-UW-Act-as"] = actual_user
         if "store" in url and request.GET:
-            url = "/uw/json_utf8.ubs?quarter={}&sln1=${}&returnlink=t".format(
+            url = "uw/json_utf8.ubs?quarter={}&sln1=${}&returnlink=t".format(
                 request.GET["quarter"],
                 request.GET["sln1"])
             use_search_api = False
     elif service == "hfs":
         headers["X-UW-Act-as"] = actual_user
         if "accounts" in url and request.GET:
-            url = "/myuw/v1/{}".format(request.GET["uwnetid"])
+            url = "myuw/v1/{}".format(request.GET["uwnetid"])
             use_search_api = False
     elif service == "libraries":
         headers["X-UW-Act-as"] = actual_user
         if "accounts" in url and request.GET:
-            url = "/mylibinfo/v1/?id={}&style=json".format(
+            url = "mylibinfo/v1/?id={}&style=json".format(
                 request.GET["uwnetid"])
             use_search_api = False
     elif service == "uwnetid":
         headers["X-UW-Act-as"] = actual_user
         if "password" in url and request.GET:
-            url = "/nws/v1/uwnetid/{}/password".format(
+            url = "nws/v1/uwnetid/{}/password".format(
                 request.GET["uwnetid"])
             use_search_api = False
     elif service == "calendar":
