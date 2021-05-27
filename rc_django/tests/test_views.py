@@ -14,7 +14,7 @@ from restclients_core.exceptions import DataFailureException
 from restclients_core.models import MockHTTP
 from rc_django.views import (
     proxy, clean_self_closing_divs, format_json, format_html, get_dao_instance,
-    get_mock_response, format_search_params)
+    get_mock_response, format_search_params, customform)
 from userservice.user import UserServiceMiddleware
 from unittest import skipIf
 
@@ -80,6 +80,11 @@ class ViewNoAuthTest(TestCase):
 
         # No auth module in settings
         url = reverse("restclients_proxy", args=["test", "/test/v1"])
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 401)
+
+        url = reverse("restclients_customform", args=[
+                      "test", "/customform/index.html"])
         response = self.client.get(url)
         self.assertEquals(response.status_code, 401)
 
@@ -215,3 +220,16 @@ class ViewTest(TestCase):
         self.assertIsInstance(response, MockHTTP)
         self.assertEqual(response.status, 503)
         self.assertEqual(response.data, 'Service Unavailable')
+
+    @skipIf(missing_url("restclients_customform",
+                        args=["hfs", "index.html"]),
+            "restclients customform")
+    def test_customform(self):
+        url = reverse("restclients_customform", args=["hfs", "index.html"])
+        get_user('test_view')
+        self.client.login(username='restclients_customform',
+                          password=get_user_pass('test_view'))
+
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 302)
+        self.assertTrue("next=/view/hfs/customform/index.html" in response.url)
