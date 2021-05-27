@@ -77,48 +77,31 @@ def customform(request, service, url):
             "local_template": local_temp_url,
         }
         set_wrapper_template(context)
-        logger.info("PROXY context={}".format(context))
+        logger.info("customform context={}".format(context))
         return render(request, "localform.html", context)
-
-    elif service == "libcurrics":
-        if "?campus=" in url:
-            url = url.replace("?campus=", "/")
-        elif "course" in url and request.GET:
-            url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
-                request.GET["year"],
-                request.GET["quarter"],
-                request.GET["curriculum_abbr"],
-                request.GET["course_number"],
-                request.GET["section_id"])
-        use_actual_user = False
-
-    elif service == "myplan":
-        if "plan" in url and request.GET:
-            url = "student/api/plan/v1/{},{},1,{}".format(
-                request.GET["year"],
-                request.GET["quarter"],
-                request.GET["uwregid"])
 
     elif service == "book":
         if "store" in url and request.GET:
             url = "uw/json_utf8.ubs?quarter={}&sln1=${}&returnlink=t".format(
                 request.GET["quarter"],
                 request.GET["sln1"])
-
     elif service == "hfs":
         if "accounts" in url and request.GET:
             url = "myuw/v1/{}".format(request.GET["uwnetid"])
-
+    elif service == "myplan":
+        if "plan" in url and request.GET:
+            url = "student/api/plan/v1/{},{},1,{}".format(
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["uwregid"])
     elif service == "libraries":
         if "accounts" in url and request.GET:
             url = "mylibinfo/v1/?id={}&style=json".format(
                 request.GET["uwnetid"])
-
     elif service == "sws":
         if "advisers" in url and request.GET:
             url = "/student/v5/person/{}/advisers.json".format(
                 request.GET["uwregid"])
-
     elif service == "uwnetid":
         if "password" in url and request.GET:
             url = "nws/v1/uwnetid/{}/password".format(
@@ -133,7 +116,7 @@ def proxy(request, service, url):
     headers = {}
     use_actual_user = False
 
-    logger.info("ORIG url={}".format(url))
+    logger.info("PROXY url={}".format(url))
     if re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
@@ -169,6 +152,7 @@ def proxy(request, service, url):
 
 
 def render_results(request, service, url, headers, use_actual_user):
+    logger.info("render_results url={}".format(url))
     use_pre = False
     if service == "calendar":
         use_pre = True
