@@ -7,7 +7,7 @@ from rc_django.views import proxy, errors, customform
 
 urlpatterns = [
     url(r'errors', errors, name="restclients_errors"),
-    url(r'view/customform/(\w+).html$', customform,
+    url(r'view/(\w+)/customform/(.*)$', customform,
       name="restclients_customform"),
     url(r'view/(\w+)/(.*)$', proxy, name="restclients_proxy"),
 ]

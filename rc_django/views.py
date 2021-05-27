@@ -68,7 +68,6 @@ def get_mock_response(ex):
 @restclient_admin_required
 def customform(request, service, url):
     logger.info("ORIG url={}".format(url))
-    url.replace("customform/", "")
     local_temp_url = "proxy/{}/{}".format(service, url)
     context = {
         "local_template": local_temp_url,
