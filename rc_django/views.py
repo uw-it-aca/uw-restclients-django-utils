@@ -74,11 +74,14 @@ def proxy(request, service, url):
     headers = {}
 
     if url.endswith(".html"):
-        logger.info("".format(url))
+        logger.info("URL={}".format(url))
+        """
         context = {
             "url": url,
+            "search_template": "proxy/{}{}".format(service, url)
         }
-        # return render(request, url, context)
+        return render(request, url, context)
+        """
     elif re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
