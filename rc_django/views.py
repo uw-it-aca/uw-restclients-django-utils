@@ -66,26 +66,28 @@ def get_mock_response(ex):
 
 @csrf_protect
 @restclient_admin_required
+def customform(request, service, url):
+    logger.info("ORIG url={}".format(url))
+    url.replace("customform/", "")
+    local_temp_url = "proxy/{}/{}".format(service, url)
+    context = {
+        "local_template": local_temp_url,
+    }
+    set_wrapper_template(context)
+    logger.info("PROXY context={}".format(context))
+    return render(request, "localform.html", context)
+
+
+@csrf_protect
+@restclient_admin_required
 def proxy(request, service, url):
     user_service = UserService()
     actual_user = user_service.get_original_user()
     use_search_api = True
     use_pre = False
     headers = {}
-
-    if url.endswith(".html"):
-        # use local template for input form
-        local_temp_url = "proxy/{}/{}".format(service, url)
-        logger.info("URL={}".format(local_temp_url))
-        context = {
-            "url": local_temp_url,
-            "search_template": local_temp_url,
-            "search": {}
-        }
-        set_wrapper_template(context)
-        logger.info("PROXY context={}".format(context))
-        return render(request, "proxy.html", context)
-    elif re.match(r'^iasystem', service):
+  
+    if re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
             service = 'iasystem_' + url[:index].replace("_", "-")
