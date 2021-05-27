@@ -138,9 +138,6 @@ def proxy(request, service, url):
                 request.GET["section_id"])
     elif service == "sws" or service == "gws":
         use_actual_user = True
-        if "advisers" in url and request.GET:
-            url = "/student/v5/person/{}/advisers.json".format(
-                request.GET["uwregid"])
 
     if request.GET:
         try:
