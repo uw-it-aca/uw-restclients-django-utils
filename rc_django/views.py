@@ -73,7 +73,13 @@ def proxy(request, service, url):
     use_pre = False
     headers = {}
 
-    if re.match(r'^iasystem', service):
+    if url.endswith(".html"):
+        logger.info("".format(url))
+        context = {
+            "url": url,
+        }
+        return render(request, url, context)
+    elif re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
             service = 'iasystem_' + url[:index].replace("_", "-")
@@ -200,7 +206,7 @@ def proxy(request, service, url):
         context["search"] = format_search_params(url)
     except TemplateDoesNotExist:
         context["search_template"] = None
-
+    logger.info("PROXY url={}".format())
     return render(request, "proxy.html", context)
 
 
