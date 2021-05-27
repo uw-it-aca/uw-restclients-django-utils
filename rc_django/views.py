@@ -169,6 +169,7 @@ def proxy(request, service, url):
 
 
 def render_results(request, service, url, headers, use_actual_user):
+    use_pre = False
     if service == "calendar":
         use_pre = True
 
