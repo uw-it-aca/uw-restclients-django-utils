@@ -67,24 +67,75 @@ def get_mock_response(ex):
 @csrf_protect
 @restclient_admin_required
 def customform(request, service, url):
+    actual_user = True
     logger.info("ORIG url={}".format(url))
-    local_temp_url = "proxy/{}/{}".format(service, url)
-    context = {
-        "local_template": local_temp_url,
-    }
-    set_wrapper_template(context)
-    logger.info("PROXY context={}".format(context))
-    return render(request, "localform.html", context)
+    if url.endswith(".html"):
+        local_temp_url = "proxy/{}/{}".format(service, url)
+        context = {
+            "local_template": local_temp_url,
+        }
+        set_wrapper_template(context)
+        logger.info("PROXY context={}".format(context))
+        return render(request, "localform.html", context)
+
+    elif service == "libcurrics":
+        if "?campus=" in url:
+            url = url.replace("?campus=", "/")
+        elif "course" in url and request.GET:
+            url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["curriculum_abbr"],
+                request.GET["course_number"],
+                request.GET["section_id"])
+        actual_user = False
+
+    elif service == "myplan":
+        if "plan" in url and request.GET:
+            url = "student/api/plan/v1/{},{},1,{}".format(
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["uwregid"])
+
+    elif service == "book":
+        if "store" in url and request.GET:
+            url = "uw/json_utf8.ubs?quarter={}&sln1=${}&returnlink=t".format(
+                request.GET["quarter"],
+                request.GET["sln1"])
+
+    elif service == "hfs":
+        if "accounts" in url and request.GET:
+            url = "myuw/v1/{}".format(request.GET["uwnetid"])
+
+    elif service == "libraries":
+        if "accounts" in url and request.GET:
+            url = "mylibinfo/v1/?id={}&style=json".format(
+                request.GET["uwnetid"])
+
+    elif service == "sws":
+        if "advisers" in url and request.GET:
+            url = "/student/v5/person/{}/advisers.json".format(
+                request.GET["uwregid"])
+
+    elif service == "uwnetid":
+        if "password" in url and request.GET:
+            url = "nws/v1/uwnetid/{}/password".format(
+                request.GET["uwnetid"])
+
+    return proxy(request, service, url,
+      actual_user=actual_user, use_search_api=False)
 
 
 @csrf_protect
 @restclient_admin_required
-def proxy(request, service, url):
+def proxy(request, service, url, actual_user=False, use_search_api=True):
     user_service = UserService()
     actual_user = user_service.get_original_user()
-    use_search_api = True
     use_pre = False
     headers = {}
+    if use_actual_user:
+        headers["X-UW-Act-as"] = actual_user
+
     logger.info("ORIG url={}".format(url))
     if re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
@@ -98,50 +149,6 @@ def proxy(request, service, url):
         if "advisers" in url and request.GET:
             url = "/student/v5/person/{}/advisers.json".format(
                 request.GET["uwregid"])
-            use_search_api = False
-    elif service == "libcurrics":
-        if "?campus=" in url:
-            url = url.replace("?campus=", "/")
-        elif "course" in url and request.GET:
-            url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
-                request.GET["year"],
-                request.GET["quarter"],
-                request.GET["curriculum_abbr"],
-                request.GET["course_number"],
-                request.GET["section_id"])
-            use_search_api = False
-    elif service == "myplan":
-        headers["X-UW-Act-as"] = actual_user
-        if "plan" in url and request.GET:
-            url = "student/api/plan/v1/{},{},1,{}".format(
-                request.GET["year"],
-                request.GET["quarter"],
-                request.GET["uwregid"])
-            use_search_api = False
-    elif service == "book":
-        headers["X-UW-Act-as"] = actual_user
-        if "store" in url and request.GET:
-            url = "uw/json_utf8.ubs?quarter={}&sln1=${}&returnlink=t".format(
-                request.GET["quarter"],
-                request.GET["sln1"])
-            use_search_api = False
-    elif service == "hfs":
-        headers["X-UW-Act-as"] = actual_user
-        if "accounts" in url and request.GET:
-            url = "myuw/v1/{}".format(request.GET["uwnetid"])
-            use_search_api = False
-    elif service == "libraries":
-        headers["X-UW-Act-as"] = actual_user
-        if "accounts" in url and request.GET:
-            url = "mylibinfo/v1/?id={}&style=json".format(
-                request.GET["uwnetid"])
-            use_search_api = False
-    elif service == "uwnetid":
-        headers["X-UW-Act-as"] = actual_user
-        if "password" in url and request.GET:
-            url = "nws/v1/uwnetid/{}/password".format(
-                request.GET["uwnetid"])
-            use_search_api = False
     elif service == "calendar":
         use_pre = True
 
