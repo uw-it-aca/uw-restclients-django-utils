@@ -74,14 +74,16 @@ def proxy(request, service, url):
     headers = {}
 
     if url.endswith(".html"):
-        logger.info("URL={}".format(url))
-        """
+        # use local template for input form
+        local_temp_url = "proxy/{}/{}".format(service, url)
+        logger.info("URL={}".format(local_temp_url))
         context = {
-            "url": url,
-            "search_template": "proxy/{}{}".format(service, url)
+            "url": local_temp_url,
+            "search_template": local_temp_url,
+            "search": {}
         }
-        return render(request, url, context)
-        """
+        logger.info("PROXY context={}".format(context))
+        return render(request, "proxy.html", set_wrapper_template(context))
     elif re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
@@ -209,7 +211,7 @@ def proxy(request, service, url):
         context["search"] = format_search_params(url)
     except TemplateDoesNotExist:
         context["search_template"] = None
-    logger.info("PROXY context={}".format(context))
+
     return render(request, "proxy.html", context)
 
 
