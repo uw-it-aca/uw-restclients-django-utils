@@ -78,7 +78,7 @@ def proxy(request, service, url):
         context = {
             "url": url,
         }
-        return render(request, url, context)
+        # return render(request, url, context)
     elif re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
@@ -206,7 +206,7 @@ def proxy(request, service, url):
         context["search"] = format_search_params(url)
     except TemplateDoesNotExist:
         context["search_template"] = None
-    logger.info("PROXY url={}".format())
+    logger.info("PROXY context={}".format(context))
     return render(request, "proxy.html", context)
 
 
