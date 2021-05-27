@@ -85,7 +85,7 @@ def proxy(request, service, url):
     use_search_api = True
     use_pre = False
     headers = {}
-  
+    logger.info("ORIG url={}".format(url))
     if re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
