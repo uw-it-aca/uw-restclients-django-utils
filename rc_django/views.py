@@ -66,13 +66,57 @@ def get_mock_response(ex):
 
 @csrf_protect
 @restclient_admin_required
-def proxy(request, service, url):
-    user_service = UserService()
-    actual_user = user_service.get_original_user()
-
-    use_pre = False
+def customform(request, service, url):
     headers = {}
+    use_actual_user = True
 
+    logger.info("ORIG url={}".format(url))
+    if url.endswith(".html"):
+        local_temp_url = "proxy/{}/{}".format(service, url)
+        context = {
+            "local_template": local_temp_url,
+        }
+        set_wrapper_template(context)
+        logger.info("customform context={}".format(context))
+        return render(request, "localform.html", context)
+
+    elif service == "book":
+        if "store" in url and request.GET:
+            url = "uw/json_utf8.ubs?quarter={}&sln1=${}&returnlink=t".format(
+                request.GET["quarter"],
+                request.GET["sln1"])
+    elif service == "hfs":
+        if "accounts" in url and request.GET:
+            url = "myuw/v1/{}".format(request.GET["uwnetid"])
+    elif service == "myplan":
+        if "plan" in url and request.GET:
+            url = "student/api/plan/v1/{},{},1,{}".format(
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["uwregid"])
+    elif service == "libraries":
+        if "accounts" in url and request.GET:
+            url = "mylibinfo/v1/?id={}&style=json".format(
+                request.GET["uwnetid"])
+    elif service == "sws":
+        if "advisers" in url and request.GET:
+            url = "/student/v5/person/{}/advisers.json".format(
+                request.GET["uwregid"])
+    elif service == "uwnetid":
+        if "password" in url and request.GET:
+            url = "nws/v1/uwnetid/{}/password".format(
+                request.GET["uwnetid"])
+
+    return render_results(request, service, url, headers, use_actual_user)
+
+
+@csrf_protect
+@restclient_admin_required
+def proxy(request, service, url):
+    headers = {}
+    use_actual_user = False
+
+    logger.info("PROXY url={}".format(url))
     if re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
@@ -93,9 +137,26 @@ def proxy(request, service, url):
                 request.GET["course_number"],
                 request.GET["section_id"])
     elif service == "sws" or service == "gws":
-        headers["X-UW-Act-as"] = actual_user
-    elif service == "calendar":
+        use_actual_user = True
+
+    if request.GET:
+        try:
+            url = "{}?{}".format(url, urlencode(request.GET))
+        except UnicodeEncodeError as err:
+            return HttpResponse(
+                'Bad URL param given to the restclients browser')
+    return render_results(request, service, url, headers, use_actual_user)
+
+
+def render_results(request, service, url, headers, use_actual_user):
+    logger.info("render_results url={}".format(url))
+    use_pre = False
+    if service == "calendar":
         use_pre = True
+
+    user_service = UserService()
+    if use_actual_user:
+        headers["X-UW-Act-as"] = user_service.get_original_user()
 
     try:
         service_name = service
@@ -107,21 +168,12 @@ def proxy(request, service, url):
                             status=404)
 
     url = "/{}".format(quote(url))
-
-    if request.GET:
-        try:
-            url = "{}?{}".format(url, urlencode(request.GET))
-        except UnicodeEncodeError as err:
-            return HttpResponse(
-                'Bad URL param given to the restclients browser')
-
     response, start, end = get_response(request, service, url, headers, dao)
 
     is_image = False
     base_64 = None
     json_data = None
     content = response.data
-
     # Handle known images
     if (response.status == 200 and
             re.match(r'/idcard/v1/photo/[0-9A-F]{32}', url)):
