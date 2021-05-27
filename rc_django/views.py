@@ -124,7 +124,7 @@ def customform(request, service, url):
             url = "nws/v1/uwnetid/{}/password".format(
                 request.GET["uwnetid"])
 
-    return render_result(request, service, url, headers, use_actual_user)
+    return render_results(request, service, url, headers, use_actual_user)
 
 
 @csrf_protect
