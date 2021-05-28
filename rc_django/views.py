@@ -106,13 +106,17 @@ def customform(request, service, url):
                 request.GET["quarter"],
                 request.GET["uwregid"])
     elif service == "libcurrics":
-        if "course" in url and request.GET:
-            url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
-                request.GET["year"],
-                request.GET["quarter"],
-                request.GET["curriculum_abbr"],
-                request.GET["course_number"],
-                request.GET["section_id"])
+        if request.GET:
+            if "course" in url:
+                url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
+                    request.GET["year"],
+                    request.GET["quarter"],
+                    request.GET["curriculum_abbr"],
+                    request.GET["course_number"],
+                    request.GET["section_id"])
+            elif "defaultGuide" in url:
+                url = "currics_db/api/v1/data/defaultGuide/{}".format(
+                    request.GET["campus"])
     elif service == "libraries":
         if "accounts" in url and request.GET:
             url = "mylibinfo/v1/?id={}&style=json".format(
@@ -125,6 +129,7 @@ def customform(request, service, url):
         if "password" in url and request.GET:
             url = "nws/v1/uwnetid/{}/password".format(
                 request.GET["uwnetid"])
+
     if set_url_querystr:
         try:
             url = "{}?{}".format(url, urlencode(request.GET))
