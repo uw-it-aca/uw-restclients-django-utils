@@ -70,8 +70,9 @@ def customform(request, service, url):
     headers = {}
     use_actual_user = True
     set_url_querystr = False
-    logger.debug("Enter customform {} url={} GET={}".format(service, url, request.GET))
-    if url.endswith(".html"):
+    logger.debug("Enter customform {} url={} GET={}".format(
+        service, url, request.GET))
+    if url.endswith(".html") and len(request.GET) == 0:
         local_temp_url = "customform/{}/{}".format(service, url)
         context = {
             "local_template": local_temp_url,
@@ -80,8 +81,8 @@ def customform(request, service, url):
         logger.debug("Exit customform context={}".format(context))
         return render(request, "localform.html", context)
 
-    elif service == "book" and request.GET:
-        if "store" in url:
+    elif service == "book":
+        if "store" in url and request.GET:
             url = "uw/json_utf8_202007.ubs?quarter={}&sln1={}&returnlink=t".format(
                 request.GET["quarter"],
                 request.GET["sln1"])
@@ -132,7 +133,7 @@ def customform(request, service, url):
 
     if set_url_querystr:
         try:
-            url = "{}?{}".format(url, urlencode(request.GET))
+            url = "{}?{}".format(url, request.GET.urlencode())
         except UnicodeEncodeError as err:
             logger.error("{} Bad URL params: {}".format(err, request.GET))
             return HttpResponse('Bad URL param given to the restclients browser')
