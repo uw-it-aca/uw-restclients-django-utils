@@ -83,7 +83,8 @@ def customform(request, service, url):
 
     elif service == "book":
         if "store" in url:
-            url = "uw/json_utf8_202007.ubs?quarter={}&sln1={}&returnlink=t".format(
+            url = "{}?quarter={}&sln1={}&returnlink=t".format(
+                "uw/json_utf8_202007.ubs",
                 request.GET["quarter"],
                 request.GET["sln1"])
     elif service == "grad":
@@ -133,8 +134,9 @@ def customform(request, service, url):
         try:
             url = "{}?{}".format(url, request.GET.urlencode())
         except UnicodeEncodeError as err:
-            logger.error("{} Bad URL params: {}".format(err, request.GET))
-            return HttpResponse('Bad URL param given to the restclients browser')
+            logger.error(
+                "{} Bad URL params: {}".format(err, request.GET))
+            return HttpResponse('Bad values in the form')
 
     return render_results(request, service, url, headers, use_actual_user)
 
