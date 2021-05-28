@@ -82,15 +82,15 @@ def customform(request, service, url):
 
     elif service == "book":
         if "store" in url and request.GET:
-            url = "uw/json_utf8.ubs?quarter={}&sln1=${}&returnlink=t".format(
+            url = "uw/json_utf8.ubs?quarter={}&sln1={}&returnlink=t".format(
                 request.GET["quarter"],
                 request.GET["sln1"])
+    elif service == "grad":
+        if request.GET:
+            url = __set_url_querystr(request, url)
     elif service == "hfs":
         if "accounts" in url and request.GET:
             url = "myuw/v1/{}".format(request.GET["uwnetid"])
-    elif service == "grad":
-        if request.GET:
-            __set_url_querystr(request, url)
     elif service == "myplan":
         if "plan" in url and request.GET:
             url = "student/api/plan/v1/{},{},1,{}".format(
@@ -123,8 +123,9 @@ def customform(request, service, url):
 
 def __set_url_querystr(request, url):
     try:
-        url = "{}?{}".format(url, urlencode(request.GET))
+        return "{}?{}".format(url, urlencode(request.GET))
     except UnicodeEncodeError as err:
+        logger.error("Bad URL params: {}".format(request.GET))
         raise HttpResponse('Bad URL param given to the restclients browser')
 
 
@@ -155,7 +156,8 @@ def proxy(request, service, url):
 
 
 def render_results(request, service, url, headers, use_actual_user):
-    logger.debug("Enter render_results {} url={}".format(service, url))
+    logger.debug("Enter render_results {} url={} headers={}".format(
+        service, url, headers))
     use_pre = False
     if service == "calendar":
         use_pre = True
