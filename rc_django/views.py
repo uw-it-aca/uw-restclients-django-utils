@@ -70,7 +70,7 @@ def customform(request, service, url):
     headers = {}
     use_actual_user = True
 
-    logger.info("ORIG url={}".format(url))
+    logger.info("INCOMING {} url={}".format(service, url))
     if url.endswith(".html"):
         local_temp_url = "proxy/{}/{}".format(service, url)
         context = {
@@ -94,6 +94,14 @@ def customform(request, service, url):
                 request.GET["year"],
                 request.GET["quarter"],
                 request.GET["uwregid"])
+    elif service == "libcurrics":
+        if "course" in url and request.GET:
+            url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["curriculum_abbr"],
+                request.GET["course_number"],
+                request.GET["section_id"])
     elif service == "libraries":
         if "accounts" in url and request.GET:
             url = "mylibinfo/v1/?id={}&style=json".format(
@@ -124,18 +132,6 @@ def proxy(request, service, url):
             index += 1
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
-    elif service == "libcurrics":
-        if "?campus=" in url:
-            url = url.replace("?campus=", "/")
-        elif "course?" in url:
-            url_prefix = re.sub(r'\?.*$', "", url)
-            url = "{}/{}/{}/{}/{}/{}".format(
-                url_prefix,
-                request.GET["year"],
-                request.GET["quarter"],
-                request.GET["curriculum_abbr"],
-                request.GET["course_number"],
-                request.GET["section_id"])
     elif service == "sws" or service == "gws":
         use_actual_user = True
 
