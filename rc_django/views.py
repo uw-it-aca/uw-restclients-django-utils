@@ -91,6 +91,14 @@ def customform(request, service, url):
     elif service == "hfs":
         if "accounts" in url and request.GET:
             url = "myuw/v1/{}".format(request.GET["uwnetid"])
+    elif re.match(r'^iasystem', service):
+        if url.endswith('/evaluation') and request.GET:
+            index = url.find('/')
+            service = 'iasystem_' + url[:index].replace("_", "-")
+            index += 1
+            url = url[index:]
+            headers["Accept"] = "application/vnd.collection+json"
+            url = __set_url_querystr(request, url)
     elif service == "myplan":
         if "plan" in url and request.GET:
             url = "student/api/plan/v1/{},{},1,{}".format(
@@ -136,14 +144,8 @@ def proxy(request, service, url):
     use_actual_user = False
 
     logger.debug("Enter proxy {} url={}".format(service, url))
-    if re.match(r'^iasystem', service):
-        if url.endswith('/evaluation'):
-            index = url.find('/')
-            service = 'iasystem_' + url[:index].replace("_", "-")
-            index += 1
-            url = url[index:]
-            headers["Accept"] = "application/vnd.collection+json"
-    elif service == "sws" or service == "gws":
+
+    if service == "sws" or service == "gws":
         use_actual_user = True
 
     if request.GET:
