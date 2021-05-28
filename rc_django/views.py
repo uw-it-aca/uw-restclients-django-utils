@@ -69,10 +69,10 @@ def get_mock_response(ex):
 def customform(request, service, url):
     headers = {}
     use_actual_user = True
-
+    set_url_querystr = False
     logger.debug("Enter customform {} url={}".format(service, url))
     if url.endswith(".html"):
-        local_temp_url = "proxy/{}/{}".format(service, url)
+        local_temp_url = "customform/{}/{}".format(service, url)
         context = {
             "local_template": local_temp_url,
         }
@@ -87,7 +87,7 @@ def customform(request, service, url):
                 request.GET["sln1"])
     elif service == "grad":
         if request.GET:
-            url = __set_url_querystr(request, url)
+            set_url_querystr = True
     elif service == "hfs":
         if "accounts" in url and request.GET:
             url = "myuw/v1/{}".format(request.GET["uwnetid"])
@@ -98,7 +98,7 @@ def customform(request, service, url):
             index += 1
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
-            url = __set_url_querystr(request, url)
+            set_url_querystr = True
     elif service == "myplan":
         if "plan" in url and request.GET:
             url = "student/api/plan/v1/{},{},1,{}".format(
@@ -125,16 +125,14 @@ def customform(request, service, url):
         if "password" in url and request.GET:
             url = "nws/v1/uwnetid/{}/password".format(
                 request.GET["uwnetid"])
+    if set_url_querystr:
+        try:
+            url = "{}?{}".format(url, urlencode(request.GET))
+        except UnicodeEncodeError as err:
+            logger.error("{} Bad URL params: {}".format(err, request.GET))
+            return HttpResponse('Bad URL param given to the restclients browser')
 
     return render_results(request, service, url, headers, use_actual_user)
-
-
-def __set_url_querystr(request, url):
-    try:
-        return "{}?{}".format(url, urlencode(request.GET))
-    except UnicodeEncodeError as err:
-        logger.error("{} Bad URL params: {}".format(err, request.GET))
-        raise HttpResponse('Bad URL param given to the restclients browser')
 
 
 @csrf_protect
