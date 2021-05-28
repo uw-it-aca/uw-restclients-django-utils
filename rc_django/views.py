@@ -70,14 +70,14 @@ def customform(request, service, url):
     headers = {}
     use_actual_user = True
 
-    logger.info("INCOMING {} url={}".format(service, url))
+    logger.debug("Enter customform {} url={}".format(service, url))
     if url.endswith(".html"):
         local_temp_url = "proxy/{}/{}".format(service, url)
         context = {
             "local_template": local_temp_url,
         }
         set_wrapper_template(context)
-        logger.info("customform context={}".format(context))
+        logger.debug("Exit customform context={}".format(context))
         return render(request, "localform.html", context)
 
     elif service == "book":
@@ -124,7 +124,7 @@ def proxy(request, service, url):
     headers = {}
     use_actual_user = False
 
-    logger.info("PROXY url={}".format(url))
+    logger.debug("Enter proxy {} url={}".format(service, url))
     if re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
@@ -145,7 +145,7 @@ def proxy(request, service, url):
 
 
 def render_results(request, service, url, headers, use_actual_user):
-    logger.info("render_results url={}".format(url))
+    logger.debug("Enter render_results {} url={}".format(service, url))
     use_pre = False
     if service == "calendar":
         use_pre = True
