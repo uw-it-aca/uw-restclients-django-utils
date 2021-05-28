@@ -88,6 +88,9 @@ def customform(request, service, url):
     elif service == "hfs":
         if "accounts" in url and request.GET:
             url = "myuw/v1/{}".format(request.GET["uwnetid"])
+    elif service == "grad":
+        if request.GET:
+            __set_url_querystr(request, url)
     elif service == "myplan":
         if "plan" in url and request.GET:
             url = "student/api/plan/v1/{},{},1,{}".format(
@@ -116,6 +119,13 @@ def customform(request, service, url):
                 request.GET["uwnetid"])
 
     return render_results(request, service, url, headers, use_actual_user)
+
+
+def __set_url_querystr(request, url):
+    try:
+        url = "{}?{}".format(url, urlencode(request.GET))
+    except UnicodeEncodeError as err:
+        raise HttpResponse('Bad URL param given to the restclients browser')
 
 
 @csrf_protect
