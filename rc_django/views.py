@@ -72,7 +72,7 @@ def customform(request, service, url):
     set_url_querystr = False
     logger.debug("Enter customform {} url={} GET={}".format(
         service, url, request.GET))
-    if url.endswith(".html") and len(request.GET) == 0:
+    if url.endswith(".html") or len(request.GET) == 0:
         local_temp_url = "customform/{}/{}".format(service, url)
         context = {
             "local_template": local_temp_url,
@@ -82,18 +82,17 @@ def customform(request, service, url):
         return render(request, "localform.html", context)
 
     elif service == "book":
-        if "store" in url and request.GET:
+        if "store" in url:
             url = "uw/json_utf8_202007.ubs?quarter={}&sln1={}&returnlink=t".format(
                 request.GET["quarter"],
                 request.GET["sln1"])
     elif service == "grad":
-        if request.GET:
-            set_url_querystr = True
+        set_url_querystr = True
     elif service == "hfs":
-        if "accounts" in url and request.GET:
+        if "accounts" in url:
             url = "myuw/v1/{}".format(request.GET["uwnetid"])
     elif re.match(r'^iasystem', service):
-        if url.endswith('/evaluation') and request.GET:
+        if url.endswith('/evaluation'):
             index = url.find('/')
             service = 'iasystem_' + url[:index].replace("_", "-")
             index += 1
@@ -101,33 +100,32 @@ def customform(request, service, url):
             headers["Accept"] = "application/vnd.collection+json"
             set_url_querystr = True
     elif service == "myplan":
-        if "plan" in url and request.GET:
+        if "plan" in url:
             url = "student/api/plan/v1/{},{},1,{}".format(
                 request.GET["year"],
                 request.GET["quarter"],
                 request.GET["uwregid"])
     elif service == "libcurrics":
-        if request.GET:
-            if "course" in url:
-                url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
-                    request.GET["year"],
-                    request.GET["quarter"],
-                    request.GET["curriculum_abbr"],
-                    request.GET["course_number"],
-                    request.GET["section_id"])
-            elif "defaultGuide" in url:
-                url = "currics_db/api/v1/data/defaultGuide/{}".format(
-                    request.GET["campus"])
+        if "course" in url:
+            url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
+                request.GET["year"],
+                request.GET["quarter"],
+                request.GET["curriculum_abbr"],
+                request.GET["course_number"],
+                request.GET["section_id"])
+        elif "defaultGuide" in url:
+            url = "currics_db/api/v1/data/defaultGuide/{}".format(
+                request.GET["campus"])
     elif service == "libraries":
-        if "accounts" in url and request.GET:
+        if "accounts" in url:
             url = "mylibinfo/v1/?id={}&style=json".format(
                 request.GET["uwnetid"])
     elif service == "sws":
-        if "advisers" in url and request.GET:
+        if "advisers" in url:
             url = "/student/v5/person/{}/advisers.json".format(
                 request.GET["uwregid"])
     elif service == "uwnetid":
-        if "password" in url and request.GET:
+        if "password" in url:
             url = "nws/v1/uwnetid/{}/password".format(
                 request.GET["uwnetid"])
 
