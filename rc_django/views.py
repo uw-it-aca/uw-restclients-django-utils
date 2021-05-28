@@ -79,7 +79,7 @@ def customform(request, service, url):
         }
         set_wrapper_template(context)
         logger.debug("Exit customform context={}".format(context))
-        return render(request, "localform.html", context)
+        return render(request, "customform.html", context)
 
     elif service == "book":
         if "store" in url:
