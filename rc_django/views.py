@@ -70,7 +70,7 @@ def customform(request, service, url):
     headers = {}
     use_actual_user = True
     set_url_querystr = False
-    logger.debug("Enter customform {} url={}".format(service, url))
+    logger.debug("Enter customform {} url={} GET={}".format(service, url, request.GET))
     if url.endswith(".html"):
         local_temp_url = "customform/{}/{}".format(service, url)
         context = {
@@ -80,8 +80,8 @@ def customform(request, service, url):
         logger.debug("Exit customform context={}".format(context))
         return render(request, "localform.html", context)
 
-    elif service == "book":
-        if "store" in url and request.GET:
+    elif service == "book" and request.GET:
+        if "store" in url:
             url = "uw/json_utf8_202007.ubs?quarter={}&sln1={}&returnlink=t".format(
                 request.GET["quarter"],
                 request.GET["sln1"])
