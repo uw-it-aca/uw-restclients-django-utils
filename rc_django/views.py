@@ -95,7 +95,7 @@ def customform(request, service, url):
     elif re.match(r'^iasystem', service):
         if url.endswith('/evaluation'):
             index = url.find('/')
-            service = 'iasystem_' + url[:index].replace("_", "-")
+            service = 'iasystem_' + url[:index]
             index += 1
             url = url[index:]
             headers["Accept"] = "application/vnd.collection+json"
