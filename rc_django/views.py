@@ -5,13 +5,11 @@ import re
 import json
 import logging
 import traceback
-from django.conf import settings
 from django.urls import reverse
-from django.http import HttpResponse, HttpResponseRedirect
-from django.template import loader, RequestContext, TemplateDoesNotExist
+from django.http import HttpResponse
+from django.template import loader, TemplateDoesNotExist
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
-from importlib import import_module
 from restclients_core.dao import DAO
 from restclients_core.models import MockHTTP
 from restclients_core.exceptions import DataFailureException
@@ -70,15 +68,16 @@ def customform(request, service, url):
     headers = {}
     use_actual_user = True
     set_url_querystr = False
-    logger.debug("Enter customform {} url={} GET={}".format(
-        service, url, request.GET))
+    logger.debug(
+        "Enter customform service: {}, url: {}, GET: {}".format(
+            service, url, request.GET))
     if url.endswith(".html") or len(request.GET) == 0:
         local_temp_url = "customform/{}/{}".format(service, url)
         context = {
             "local_template": local_temp_url,
         }
         set_wrapper_template(context)
-        logger.debug("Exit customform context={}".format(context))
+        logger.debug("Exit customform context: {}".format(context))
         return render(request, "customform.html", context)
 
     elif service == "book":
@@ -150,7 +149,9 @@ def proxy(request, service, url):
     headers = {}
     use_actual_user = False
 
-    logger.debug("Enter proxy {} url={}".format(service, url))
+    logger.debug(
+        "Enter proxy service: {}, url: {}, GET: {}".format(
+            service, url, request.GET))
 
     if service == "sws" or service == "gws":
         use_actual_user = True
@@ -165,8 +166,9 @@ def proxy(request, service, url):
 
 
 def render_results(request, service, url, headers, use_actual_user):
-    logger.debug("Enter render_results {} url={} headers={}".format(
-        service, url, headers))
+    logger.debug(
+        "Enter render_results service: {}, url: {}, headers: {}".format(
+            service, url, headers))
     use_pre = False
     if service == "calendar":
         use_pre = True
@@ -186,7 +188,8 @@ def render_results(request, service, url, headers, use_actual_user):
 
     url = "/{}".format(quote(url))
     response, start, end = get_response(request, service, url, headers, dao)
-
+    logger.debug("get_response url: {}, status: {}, data: {}".format(
+        url, response.status, response.data))
     is_image = False
     base_64 = None
     json_data = None
