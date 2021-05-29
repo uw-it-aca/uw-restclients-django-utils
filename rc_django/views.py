@@ -118,7 +118,7 @@ def customform(request, service, url):
                 request.GET["campus"])
     elif service == "libraries":
         if "accounts" == url:
-            url = "mylibinfo/v1/?id={}&style=json".format(
+            url = "mylibinfo/v1/?id={}".format(
                 request.GET["uwnetid"])
     elif service == "sws":
         if "advisers" == url:
