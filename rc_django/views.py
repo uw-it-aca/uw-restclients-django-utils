@@ -82,7 +82,7 @@ def customform(request, service, url):
         return render(request, "customform.html", context)
 
     elif service == "book":
-        if "store" in url:
+        if "store" == url:
             url = "{}?quarter={}&sln1={}&returnlink=t".format(
                 "uw/json_utf8_202007.ubs",
                 request.GET["quarter"],
@@ -101,33 +101,36 @@ def customform(request, service, url):
             headers["Accept"] = "application/vnd.collection+json"
             set_url_querystr = True
     elif service == "myplan":
-        if "plan" in url:
+        if "plan" == url:
             url = "student/api/plan/v1/{},{},1,{}".format(
                 request.GET["year"],
                 request.GET["quarter"],
                 request.GET["uwregid"])
     elif service == "libcurrics":
-        if "course" in url:
+        if "course" == url:
             url = "currics_db/api/v1/data/course/{}/{}/{}/{}/{}".format(
                 request.GET["year"],
                 request.GET["quarter"],
                 request.GET["curriculum_abbr"],
                 request.GET["course_number"],
                 request.GET["section_id"])
-        elif "defaultGuide" in url:
+        elif "defaultGuide" == url:
             url = "currics_db/api/v1/data/defaultGuide/{}".format(
                 request.GET["campus"])
     elif service == "libraries":
-        if "accounts" in url:
+        if "accounts" == url:
             url = "mylibinfo/v1/?id={}&style=json".format(
                 request.GET["uwnetid"])
     elif service == "sws":
-        if "advisers" in url:
+        if "advisers" == url:
             url = "/student/v5/person/{}/advisers.json".format(
                 request.GET["uwregid"])
     elif service == "uwnetid":
-        if "password" in url:
+        if "password" == url:
             url = "nws/v1/uwnetid/{}/password".format(
+                request.GET["uwnetid"])
+        elif "subscription" == url:
+            url = "nws/v1/uwnetid/{}/subscription/60,64,105".format(
                 request.GET["uwnetid"])
 
     if set_url_querystr:
