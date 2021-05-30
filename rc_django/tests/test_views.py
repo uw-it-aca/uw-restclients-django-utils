@@ -2,21 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # -*- coding: utf-8 -*-
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 from django.conf import settings
 from django.test.utils import override_settings
-from django.contrib.auth.middleware import AuthenticationMiddleware
-from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.models import User
 from django.urls import reverse
 from restclients_core.dao import DAO, MockDAO
-from restclients_core.exceptions import DataFailureException
 from restclients_core.models import MockHTTP
-from rc_django.views import (
-    proxy, clean_self_closing_divs, format_json, format_html, get_dao_instance,
-    get_mock_response, format_search_params, customform)
-from userservice.user import UserServiceMiddleware
+from rc_django.views.rest_proxy import RestSearchView, RestProxyView
 from unittest import skipIf
+import mock
 
 
 class TEST_DAO(DAO):
@@ -79,12 +74,11 @@ class ViewNoAuthTest(TestCase):
             username='test_view', password=get_user_pass('test_view'))
 
         # No auth module in settings
-        url = reverse("restclients_proxy", args=["test", "/test/v1"])
+        url = reverse("restclients_proxy", args=["test", "test/v1"])
         response = self.client.get(url)
         self.assertEquals(response.status_code, 401)
 
-        url = reverse("restclients_customform", args=[
-                      "test", "/customform/index.html"])
+        url = reverse("restclients_customform", args=["test", "index.html"])
         response = self.client.get(url)
         self.assertEquals(response.status_code, 401)
 
@@ -92,104 +86,43 @@ class ViewNoAuthTest(TestCase):
 @override_settings(
     RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
 class ViewTest(TestCase):
-    def test_simple(self):
-        self_closed = "<div/>"
-        valid = "<!-- <div/> --><div></div>"
-
-        self.assertEquals(valid, clean_self_closing_divs(self_closed))
-
-    def test_2_simple(self):
-        self_closed = '<div/><div id="1"/>'
-        valid = ('<!-- <div/> --><div></div>'
-                 '<!-- <div id="1"/> --><div id="1"></div>')
-
-        self.assertEquals(valid, clean_self_closing_divs(self_closed))
-
-    def test_valid_div(self):
-        valid = "<div id='test_id'></div>"
-        self.assertEquals(valid, clean_self_closing_divs(valid))
-
-    def test_div_then_valid_self_closing(self):
-        valid = "<div id='test_id'></div><br/>"
-        self.assertEquals(valid, clean_self_closing_divs(valid))
+    def test_get_context_data(self):
+        context = RestSearchView().get_context_data(**{})
+        self.assertEqual(context["wrapper_template"], "proxy_wrapper.html")
 
     def test_bad_url(self):
         # Something was sending urls that should have been
         # ...=&reg_id=... into ...=®_id=A
         # That should be fixed, but in the mean time we shouldn't crash
-        request = RequestFactory().get("/", {"i": "u\xae_id=A"})
-        SessionMiddleware().process_request(request)
-        AuthenticationMiddleware().process_request(request)
-        UserServiceMiddleware().process_request(request)
-
-        request.user = User.objects.create_user(username='tbu_user',
-                                                email='fake@fake',
-                                                password='top_secret')
-
-        # Add the testing DAO service
-        response = proxy(request, "test", "/fake/")
-
-        # Test that the bad param doesn't cause a non-200 response
-        self.assertEquals(response.status_code, 200)
-
-    def test_format_json(self):
-        service = 'pws'
-        json_data = '{"Href": "/identity/v2/entity.json"}'
-        formatted = (u'{<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;"Href":&nbsp;'
-                     u'"<a href="/view/pws/identity/v2/entity.json">'
-                     u'/identity/v2/entity.json</a>"<br/>\n}')
-        html, raw = format_json(service, json_data)
-        self.assertEquals(formatted, html)
-        self.assertEquals(json_data, raw)
-
-        json_data = '{"Decimal": 5.678}'
-        formatted = ('{<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;"Decimal":'
-                     '&nbsp;5.678<br/>\n}')
-        html, raw = format_json(service, json_data)
-        self.assertEquals(formatted, html)
-        self.assertEquals(json_data, raw)
-
-        self.assertRaises(ValueError, format_json, service, '<p></p>')
-
-    def test_format_html(self):
-        service = 'pws'
-        output = '<a href="/view/pws/api/v1/test"></a>'
-
-        html = '<a href="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html), output)
-
-        html = '<a HREF="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html), output)
-
-        # Binary string
-        html = b'<a href="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html), output)
-
-        # Single quotes
-        html = "<a href='/api/v1/test'></a>"
-        self.assertEqual(format_html(service, html), output)
-
-        # Style tags
-        html = '<style>h1 {color:red;}</style><a href="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html), output)
-
-        html = b'<STYLE>h1 {color:red;}</STYLE><a href="/api/v1/test"></a>'
-        self.assertEqual(format_html(service, html), output)
-
-    def test_format_search_params(self):
-        url = 'https://test.edu/api/test?a=one&b=two&c=one%20two'
-        self.assertEqual(format_search_params(url), {
-            'a': 'one', 'b': 'two', 'c': 'one two'})
-
-    @skipIf(missing_url("restclients_proxy", args=["test", "/ok"]),
-            "restclients urls not configured")
-    def test_support_links(self):
-        url = reverse("restclients_proxy", args=["test", "/test/v1"])
+        url = reverse("restclients_proxy", args=["test", "test/v2"])
         get_user('test_view')
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
 
+        url = "{}?i=u\xae_id=A".format(url)
+
         response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_format_search_params(self):
+        url = 'https://test.edu/api/test?a=one&b=two&c=one%20two'
+        self.assertEqual(RestProxyView.format_search_params(url), {
+            'a': 'one', 'b': 'two', 'c': 'one two'})
+
+    @skipIf(missing_url("restclients_proxy", args=["test", "ok"]),
+            "restclients urls not configured")
+    def test_support_links(self):
+        url = reverse("restclients_proxy", args=["test", "test/v1"])
+        get_user('test_view')
+        self.client.login(username='test_view',
+                          password=get_user_pass('test_view'))
+
+        # GET
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 200)
+
+        # POST
+        response = self.client.post(url)
         self.assertEquals(response.status_code, 200)
 
     def test_service_errors(self):
@@ -198,32 +131,37 @@ class ViewTest(TestCase):
             username='test_view', password=get_user_pass('test_view'))
 
         # Unauthorized service
-        url = reverse("restclients_proxy", args=["secret", "/test/v1"])
+        url = reverse("restclients_proxy", args=["secret", "test/v1"])
         response = self.client.get(url)
         self.assertEquals(response.status_code, 401)
 
         # Missing service
-        url = reverse("restclients_proxy", args=["fake", "/test/v1"])
+        url = reverse("restclients_proxy", args=["fake", "test/v1"])
         response = self.client.get(url)
         self.assertEquals(response.status_code, 404)
 
-    def test_get_dao_instance(self):
-        self.assertEquals(type(get_dao_instance("test")), TEST_DAO)
-        self.assertEquals(type(get_dao_instance('test_sub')), SUB_DAO)
+    @mock.patch.object(RestProxyView, "get_context_data")
+    def test_search_post(self, mock_context_data):
+        mock_context_data.return_value = {
+            "wrapper_template": "proxy_wrapper.html"}
 
-        # Missing service
-        self.assertRaises(ImportError, get_dao_instance, "fake")
+        get_user('test_view')
+        self.client.login(username='test_view',
+                          password=get_user_pass('test_view'))
 
-    def test_get_mock_response(self):
-        dfe = DataFailureException('/', 503, 'Service Unavailable')
-        response = get_mock_response(dfe)
-        self.assertIsInstance(response, MockHTTP)
-        self.assertEqual(response.status, 503)
-        self.assertEqual(response.data, 'Service Unavailable')
+        url = reverse("restclients_proxy", args=["hfs", "accounts"])
+        response = self.client.post(url)
+        self.assertEquals(response.status_code, 400)
+        self.assertEquals(response.content,
+                          b"Missing reqired form value: 'uwnetid'")
 
-    @skipIf(missing_url("restclients_customform",
-                        args=["hfs", "index.html"]),
-            "restclients customform")
+        url = reverse("restclients_proxy", args=["hfs", "accounts"])
+        response = self.client.post(url, {"uwnetid": "javerage"})
+        mock_context_data.assert_called_with(
+            service='hfs', url='myuw/v1/javerage', headers={})
+
+    @skipIf(missing_url("restclients_customform", args=["hfs", "index.html"]),
+            "Missing URL")
     def test_customform(self):
         url = reverse("restclients_customform", args=["hfs", "index.html"])
         get_user('test_view')
@@ -232,4 +170,4 @@ class ViewTest(TestCase):
 
         response = self.client.get(url)
         self.assertEquals(response.status_code, 302)
-        self.assertTrue("next=/view/hfs/customform/index.html" in response.url)
+        self.assertTrue("next=/search/hfs/index.html" in response.url)
