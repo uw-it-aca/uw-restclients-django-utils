@@ -1,33 +1,17 @@
 # Copyright 2021 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-from django.views.generic.base import TemplateView
-from django.views.decorators.csrf import csrf_protect
-from django.utils.decorators import method_decorator
-from django.template import loader, TemplateDoesNotExist
-from django.http import HttpResponse
-from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
-from rc_django.decorators import restclient_admin_required
+from rc_django.views import RestView
 from rc_django.models import RestProxy
+from django.http import HttpResponse
+from django.template import loader, TemplateDoesNotExist
 from userservice.user import UserService
+from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
 from base64 import b64encode
-import re
 import logging
+import re
 
 logger = logging.getLogger(__name__)
-
-
-@method_decorator(csrf_protect, name='dispatch')
-@method_decorator(restclient_admin_required, name='dispatch')
-class RestView(TemplateView):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        try:
-            loader.get_template("restclients/proxy_wrapper.html")
-            context["wrapper_template"] = "restclients/proxy_wrapper.html"
-        except TemplateDoesNotExist:
-            context["wrapper_template"] = "proxy_wrapper.html"
-        return context
 
 
 class RestSearchView(RestView):

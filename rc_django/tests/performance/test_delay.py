@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from userservice.user import UserServiceMiddleware
 from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
-from rc_django.views import errors
+from rc_django.views.errors import DegradePerformanceView
 from rc_django.middleware import EnableServiceDegradationMiddleware
 from rc_django.tests.test_views import missing_url
 import time
@@ -64,7 +64,8 @@ class DegradedTestCase(TestCase):
 
         r1._dont_enforce_csrf_checks = True
 
-        errors(r1)
+        view_instance = DegradePerformanceView.as_view()
+        view_instance(r1)
 
         r1.session.save()
 
