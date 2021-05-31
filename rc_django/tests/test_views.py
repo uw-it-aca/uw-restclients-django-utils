@@ -149,17 +149,25 @@ class ViewTest(TestCase):
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
 
+        # hfs
         url = reverse("restclients_proxy", args=["hfs", "accounts"])
         response = self.client.post(url)
         self.assertEquals(response.status_code, 400)
         self.assertEquals(response.content,
                           b"Missing reqired form value: 'uwnetid'")
 
-        # hfs
         url = reverse("restclients_proxy", args=["hfs", "accounts"])
         response = self.client.post(url, {"uwnetid": "javerage"})
         mock_context_data.assert_called_with(
             service="hfs", url="myuw/v1/javerage", headers={})
+
+        # bookstore
+        url = reverse("restclients_proxy", args=["book", "store"])
+        response = self.client.post(url, {"sln1": "123", "quarter": "spring"})
+        mock_context_data.assert_called_with(
+            service="book",
+            url="uw/json_utf8_202007.ubs?quarter=spring&sln1=123&returnlink=t",
+            headers={})
 
         # myplan
         url = reverse("restclients_proxy", args=["myplan", "plan"])
@@ -182,6 +190,13 @@ class ViewTest(TestCase):
         mock_context_data.assert_called_with(
             service="iasystem_uw", url="api/v1/evaluation?student_id=123456",
             headers={"Accept": "application/vnd.collection+json"})
+
+        # uwnetid
+        url = reverse("restclients_proxy", args=["uwnetid", "password"])
+        response = self.client.post(url, {"uwnetid": "javerage"})
+        mock_context_data.assert_called_with(
+            service="uwnetid", url="nws/v1/uwnetid/javerage/password",
+            headers={})
 
     @skipIf(missing_url("restclients_customform", args=["hfs", "index.html"]),
             "Missing URL")

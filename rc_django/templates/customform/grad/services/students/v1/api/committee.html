@@ -1,5 +1,6 @@
-<h1>Committee Request (Proxy)</h1>
+<h1>Committee Request</h1>
 <form method="post" action="committee">
+{% csrf_token %}
 <div>
 
     {% include 'customform/grad/services/students/v1/api/id.html' %}

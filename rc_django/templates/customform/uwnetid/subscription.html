@@ -1,5 +1,6 @@
-<h1>UWNetID Subscription 60,64,105 (Proxy)</h1>
+<h1>UWNetID Subscription 60,64,105</h1>
 <form method="post" action="subscription">
+{% csrf_token %}
   <div>
     <label for="uwnetid">UW NetID:</label>
     <input id="uwnetid" name="uwnetid" size="64" type="text">

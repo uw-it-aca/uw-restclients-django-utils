@@ -1,5 +1,6 @@
-<h1>Petition Request (Proxy)</h1>
+<h1>Petition Request</h1>
 <form method="post" action="petition">
+{% csrf_token %}
 <div>
 
     {% include 'customform/grad/services/students/v1/api/id.html' %}
