@@ -155,10 +155,33 @@ class ViewTest(TestCase):
         self.assertEquals(response.content,
                           b"Missing reqired form value: 'uwnetid'")
 
+        # hfs
         url = reverse("restclients_proxy", args=["hfs", "accounts"])
         response = self.client.post(url, {"uwnetid": "javerage"})
         mock_context_data.assert_called_with(
-            service='hfs', url='myuw/v1/javerage', headers={})
+            service="hfs", url="myuw/v1/javerage", headers={})
+
+        # myplan
+        url = reverse("restclients_proxy", args=["myplan", "plan"])
+        response = self.client.post(url, {
+            "uwregid": "ABC", "year": "2013", "quarter": "spring"})
+        mock_context_data.assert_called_with(
+            service="myplan", url="student/api/plan/v1/2013,spring,1,ABC",
+            headers={})
+
+        # libraries
+        url = reverse("restclients_proxy", args=["libraries", "accounts"])
+        response = self.client.post(url, {"uwnetid": "javerage"})
+        mock_context_data.assert_called_with(
+            service="libraries", url="mylibinfo/v1/?id=javerage", headers={})
+
+        # iasystem
+        url = reverse("restclients_proxy", args=[
+            "iasystem_uw", "uw/api/v1/evaluation"])
+        response = self.client.post(url, {"student_id": "123456"})
+        mock_context_data.assert_called_with(
+            service="iasystem_uw", url="api/v1/evaluation?student_id=123456",
+            headers={"Accept": "application/vnd.collection+json"})
 
     @skipIf(missing_url("restclients_customform", args=["hfs", "index.html"]),
             "Missing URL")

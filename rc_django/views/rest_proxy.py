@@ -44,7 +44,7 @@ class RestSearchView(RestView):
     def get(self, request, *args, **kwargs):
         # Using args for these URLs for backwards-compatibility
         kwargs["service"] = args[0]
-        kwargs["url"] = args[1] if len(args) > 1 else ""
+        kwargs["path"] = args[1] if len(args) > 1 else ""
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
 
@@ -177,7 +177,7 @@ class RestProxyView(RestView):
                     url = "myuw/v1/{}".format(request.POST["uwnetid"])
             elif re.match(r'^iasystem', service):
                 if url.endswith('/evaluation'):
-                    index = path.find('/')
+                    index = url.find('/')
                     service = 'iasystem_' + url[:index]
                     index += 1
                     url = url[index:]
@@ -198,7 +198,7 @@ class RestProxyView(RestView):
                         request.POST["curriculum_abbr"],
                         request.POST["course_number"],
                         request.POST["section_id"])
-                elif "defaultGuide" == path:
+                elif "defaultGuide" == url:
                     url = "currics_db/api/v1/data/defaultGuide/{}".format(
                         request.POST["campus"])
             elif service == "libraries":
