@@ -144,6 +144,9 @@ class RestProxyView(RestView):
         service = args[0]
         url = args[1] if len(args) > 1 else ""
         headers = {}
+        logger.debug(
+            "RestProxyView service: {}, url: {}, request.POST: {}".format(
+                service, url, request.POST))
         set_url_querystr = False
         try:
             if service == "book":
@@ -210,7 +213,7 @@ class RestProxyView(RestView):
         except (AttributeError, ImportError):
             error = "Missing service: {}".format(service)
             context = self.get_error_context(error, 404, **kwargs)
-
+        logger.debug("Exit post context: {}".format(context))
         return self.render_to_response(context)
 
     def get_error_context(self, error, status, **kwargs):
