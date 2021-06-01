@@ -186,7 +186,7 @@ class RestProxyView(RestView):
                         request.POST["course_number"],
                         request.POST["section_id"])
                 elif "default" == url:
-                    url = "currics_db/api/v1/data/defaultguide/{}".format(
+                    url = "currics_db/api/v1/data/defaultGuide/{}".format(
                         request.POST["campus"])
             elif service == "libraries":
                 url = "mylibinfo/v1/?id={}".format(request.POST["uwnetid"])
