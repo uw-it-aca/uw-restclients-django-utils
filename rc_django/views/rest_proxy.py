@@ -3,7 +3,6 @@
 
 from rc_django.views import RestView
 from rc_django.models import RestProxy
-from django.http import HttpResponse
 from django.template import loader, TemplateDoesNotExist
 from django.urls import reverse
 from userservice.user import UserService
@@ -29,12 +28,12 @@ class RestSearchView(RestView):
         return context
 
     def get(self, request, *args, **kwargs):
+        """
+        Renders a custom form for searching a REST service.
+        """
         # Using args for these URLs for backwards-compatibility
         kwargs["service"] = args[0]
         kwargs["path"] = args[1] if len(args) > 1 else ""
-        logger.debug(
-            "RestSearchView GET service: {}, url: {}".format(
-                kwargs["service"], kwargs["path"]))
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
 
@@ -67,9 +66,6 @@ class RestProxyView(RestView):
 
         proxy = RestProxy(service_name)
         response = proxy.get_api_response(url, headers)
-
-        # logger.debug("get_api_response url: {}, status: {}, data: {}".format(
-        #    url, response.status, response.data))
 
         use_pre = True if (service == "calendar") else False
         is_image = False
@@ -117,7 +113,7 @@ class RestProxyView(RestView):
 
     def get(self, request, *args, **kwargs):
         """
-        The proxy view for API URLs.
+        Fetch an API resource and render it, formatted for a browser.
         """
         # Using args for these URLs for backwards-compatibility
         service = args[0]
@@ -127,33 +123,27 @@ class RestProxyView(RestView):
             kwargs["actas_user"] = True
 
         if request.GET:
-            try:
-                url = "{}?{}".format(url, urlencode(request.GET))
-            except UnicodeEncodeError as err:
-                return HttpResponse(
-                    'Bad URL param given to the restclients browser')
+            url = "{}?{}".format(url, urlencode(request.GET))
 
         kwargs["service"] = service
         kwargs["url"] = url
         try:
             context = self.get_context_data(**kwargs)
         except (AttributeError, ImportError):
-            return HttpResponse("Missing service: {}".format(service),
-                                status=404)
+            error = "Missing service: {}".format(service)
+            context = self.get_error_context(error, 404, **kwargs)
 
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         """
-        Entry point for custom search forms, converts form data to actual
-        API URLs.
+        Entry point for custom search forms:
+          1. Convert form data to actual API urls,
+          2. Fetch the API resource and render it, formatted for a browser.
         """
         service = args[0]
         url = args[1] if len(args) > 1 else ""
         headers = {}
-        logger.debug(
-            "Enter POST service: {}, url: {}, inputs:{}".format(
-                service, url, request.POST))
         set_url_querystr = False
         try:
             if service == "book":
@@ -204,16 +194,12 @@ class RestProxyView(RestView):
                     url = "nws/v1/uwnetid/{}/subscription/60,64,105".format(
                         request.POST["uwnetid"])
         except KeyError as ex:
-            return HttpResponse('Missing reqired form value: {}'.format(ex),
-                                status=400)
+            error = "Missing reqired form value: {}".format(ex)
+            context = self.get_error_context(error, 400, **kwargs)
+            return self.render_to_response(context)
 
         if set_url_querystr:
-            try:
-                url = "{}?{}".format(url, request.POST.urlencode())
-            except UnicodeEncodeError as err:
-                logger.error(
-                    "{} Bad URL params: {}".format(err, request.POST))
-                return HttpResponse('Bad values in the form', status=400)
+            url = "{}?{}".format(url, request.POST.urlencode())
 
         kwargs["service"] = service
         kwargs["url"] = url
@@ -222,7 +208,12 @@ class RestProxyView(RestView):
         try:
             context = self.get_context_data(**kwargs)
         except (AttributeError, ImportError):
-            return HttpResponse("Missing service: {}".format(service),
-                                status=404)
+            error = "Missing service: {}".format(service)
+            context = self.get_error_context(error, 404, **kwargs)
 
         return self.render_to_response(context)
+
+    def get_error_context(self, error, status, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"content": error, "response_code": status})
+        return context

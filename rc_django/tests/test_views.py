@@ -138,7 +138,7 @@ class ViewTest(TestCase):
         # Missing service
         url = reverse("restclients_proxy", args=["fake", "test/v1"])
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 404)
+        self.assertIn(b"Missing service: fake", response.content)
 
     @mock.patch.object(RestProxyView, "get_context_data")
     def test_search_post(self, mock_context_data):
@@ -149,12 +149,11 @@ class ViewTest(TestCase):
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
 
-        # hfs
+        # hfs, missing form values
         url = reverse("restclients_proxy", args=["hfs", "accounts"])
         response = self.client.post(url)
-        self.assertEquals(response.status_code, 400)
-        self.assertEquals(response.content,
-                          b"Missing reqired form value: 'uwnetid'")
+        self.assertIn(b"Missing reqired form value: 'uwnetid'",
+                      response.content)
 
         url = reverse("restclients_proxy", args=["hfs", "accounts"])
         response = self.client.post(url, {"uwnetid": "javerage"})
@@ -198,8 +197,6 @@ class ViewTest(TestCase):
             service="uwnetid", url="nws/v1/uwnetid/javerage/password",
             headers={})
 
-    @skipIf(missing_url("restclients_customform", args=["hfs", "index.html"]),
-            "Missing URL")
     def test_customform(self):
         url = reverse("restclients_customform", args=["hfs", "index.html"])
 
