@@ -54,6 +54,9 @@ class RestProxyView(RestView):
         service = kwargs.get("service")
         url = kwargs.get("url", "")
         headers = kwargs.get("headers", {})
+        logger.debug(
+            "RestProxyView get_context_data service: {}, url: {}".format(
+                service, url))
         user_service = UserService()
 
         if kwargs.get("actas_user"):
@@ -213,7 +216,7 @@ class RestProxyView(RestView):
         except (AttributeError, ImportError):
             error = "Missing service: {}".format(service)
             context = self.get_error_context(error, 404, **kwargs)
-        logger.debug("Exit post context: {}".format(context))
+
         return self.render_to_response(context)
 
     def get_error_context(self, error, status, **kwargs):
