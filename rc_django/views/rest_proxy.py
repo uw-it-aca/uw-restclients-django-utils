@@ -150,6 +150,7 @@ class RestProxyView(RestView):
         logger.debug(
             "RestProxyView service: {}, url: {}, request.POST: {}".format(
                 service, url, request.POST))
+        set_url_querystr = False
         error = None
 
         try:
@@ -159,7 +160,7 @@ class RestProxyView(RestView):
                     request.POST["quarter"],
                     request.POST["sln1"])
             elif service == "grad":
-                url = "{}?{}".format(url, request.POST.urlencode())
+                set_url_querystr = True
             elif service == "hfs":
                 url = "myuw/v1/{}".format(request.POST["uwnetid"])
             elif re.match(r'^iasystem', service):
@@ -168,7 +169,7 @@ class RestProxyView(RestView):
                     service = 'iasystem_' + url[:index]
                     index += 1
                     url = url[index:]
-                    url = "{}?{}".format(url, request.POST.urlencode())
+                    set_url_querystr = True
                     headers["Accept"] = "application/vnd.collection+json"
             elif service == "myplan":
                 url = "student/api/plan/v1/{},{},1,{}".format(
@@ -200,6 +201,12 @@ class RestProxyView(RestView):
                 elif "subscription" == url:
                     url = "nws/v1/uwnetid/{}/subscription/60,64,105".format(
                         request.POST["uwnetid"])
+
+            if set_url_querystr:
+                params = {k: v for k, v in request.POST.items() if (
+                    k != "csrfmiddlewaretoken")}
+                url = "{}?{}".format(url, urlencode(params))
+
         except KeyError as ex:
             error = "Missing reqired form value: {}".format(ex)
         except UnicodeEncodeError as ex:

@@ -197,6 +197,15 @@ class ViewTest(TestCase):
             service="uwnetid", url="nws/v1/uwnetid/javerage/password",
             headers={})
 
+        # grad
+        url = reverse("restclients_proxy", args=[
+            "grad", "services/students/v1/api/committee"])
+        response = self.client.post(url, {
+            "id": "12345", "csrfmiddlewaretoken": "0000000"})
+        mock_context_data.assert_called_with(
+            service="grad", url="services/students/v1/api/committee?id=12345",
+            headers={})
+
     def test_customform(self):
         url = reverse("restclients_customform", args=["hfs", "index.html"])
 
@@ -204,10 +213,12 @@ class ViewTest(TestCase):
         self.client.login(username='no_auth',
                           password=get_user_pass('test_view'))
 
+        # hfs, no auth
         response = self.client.get(url)
         self.assertEquals(response.status_code, 302)
         self.assertTrue("next=/search/hfs/index.html" in response.url)
 
+        # hfs, auth
         get_user('test_view')
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
@@ -216,6 +227,7 @@ class ViewTest(TestCase):
         self.assertIn(b'<form method="post" action="/view/hfs/index">',
                       response.content)
 
+        # iasystem
         url = reverse("restclients_customform", args=[
             "iasystem", "uw/api/v1/evaluation.html"])
         response = self.client.get(url)
