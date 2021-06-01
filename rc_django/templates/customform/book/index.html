@@ -1,5 +1,6 @@
-<h1>Bookstore Get Books (Proxy)</h1>
-<form method="get" action="store">
+<h1>Bookstore Get Books</h1>
+<form method="post" action="{{form_action}}">
+{% csrf_token %}
   <div>
     <label for="sln1">SLN:</label>
     <input id="sln1" name="sln1" size="20" type="text">

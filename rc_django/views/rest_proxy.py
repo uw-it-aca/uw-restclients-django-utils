@@ -1,0 +1,234 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
+from rc_django.views import RestView
+from rc_django.models import RestProxy
+from django.template import loader, TemplateDoesNotExist
+from django.urls import reverse
+from userservice.user import UserService
+from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
+from base64 import b64encode
+import logging
+import re
+
+logger = logging.getLogger(__name__)
+
+
+class RestSearchView(RestView):
+    template_name = "customform.html"
+
+    def get_context_data(self, **kwargs):
+        service = kwargs.get("service")
+        path = kwargs.get("path", "")
+
+        context = super().get_context_data(**kwargs)
+        context["form_template"] = "customform/{}/{}".format(service, path)
+        context["form_action"] = reverse("restclients_proxy", args=[
+            service, path.replace(".html", "")])
+        return context
+
+    def get(self, request, *args, **kwargs):
+        """
+        Renders a custom form for searching a REST service.
+        """
+        # Using args for these URLs for backwards-compatibility
+        kwargs["service"] = args[0]
+        kwargs["path"] = args[1] if len(args) > 1 else ""
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+
+class RestProxyView(RestView):
+    template_name = "proxy.html"
+
+    @staticmethod
+    def format_search_params(url):
+        params = {}
+        query_params = parse_qs(urlparse(url).query)
+        for param in query_params:
+            params[param] = ",".join(query_params[param])
+        return params
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        service = kwargs.get("service")
+        url = kwargs.get("url", "")
+        headers = kwargs.get("headers", {})
+        logger.debug(
+            "RestProxyView get_context_data service: {}, url: {}".format(
+                service, url))
+        user_service = UserService()
+
+        if kwargs.get("actas_user"):
+            headers["X-UW-Act-as"] = user_service.get_original_user()
+
+        url = "/{}".format(quote(url))
+        service_name = service
+        if service == 'iasystem':
+            service_name = 'iasystem_uw'
+
+        proxy = RestProxy(service_name)
+        response = proxy.get_api_response(url, headers)
+
+        use_pre = True if (service == "calendar") else False
+        is_image = False
+
+        if (response.status == 200 and
+                re.match(r'/idcard/v1/photo/[0-9A-F]{32}', url)):
+            # Handle known images
+            is_image = True
+            content = b64encode(response.data)
+        elif use_pre:
+            content = response.data
+        else:
+            content = proxy.formatted
+
+        context.update({
+            "url": unquote(url),
+            "content": content,
+            "json_data": proxy.json,
+            "response_code": response.status,
+            "time_taken": "{:f} seconds".format(proxy.duration),
+            "headers": response.headers,
+            "override_user": user_service.get_override_user(),
+            "use_pre": use_pre,
+            "is_image": is_image,
+        })
+
+        try:
+            loader.get_template("restclients/extra_info.html")
+            context["has_extra_template"] = True
+            context["extra_template"] = "restclients/extra_info.html"
+        except TemplateDoesNotExist:
+            pass
+
+        try:
+            search_template_path = re.sub(r"[.?].*$", "", url)
+            search_template = "proxy/{}{}.html".format(service,
+                                                       search_template_path)
+            loader.get_template(search_template)
+            context["search_template"] = search_template
+            context["search"] = format_search_params(url)
+        except TemplateDoesNotExist:
+            context["search_template"] = None
+
+        return context
+
+    def get(self, request, *args, **kwargs):
+        """
+        Fetch an API resource and render it, formatted for a browser.
+        """
+        # Using args for these URLs for backwards-compatibility
+        service = args[0]
+        url = args[1] if len(args) > 1 else ""
+
+        if service == "sws" or service == "gws":
+            kwargs["actas_user"] = True
+
+        if request.GET:
+            url = "{}?{}".format(url, urlencode(request.GET))
+
+        kwargs["service"] = service
+        kwargs["url"] = url
+        try:
+            context = self.get_context_data(**kwargs)
+        except (AttributeError, ImportError):
+            error = "Missing service: {}".format(service)
+            context = self.get_error_context(error, 404, **kwargs)
+
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Entry point for custom search forms:
+          1. Convert form data to actual API urls,
+          2. Fetch the API resource and render it, formatted for a browser.
+        """
+        service = args[0]
+        url = args[1] if len(args) > 1 else ""
+        headers = {}
+        logger.debug(
+            "RestProxyView service: {}, url: {}, request.POST: {}".format(
+                service, url, request.POST))
+        set_url_querystr = False
+        error = None
+
+        try:
+            if service == "book":
+                url = "{}?quarter={}&sln1={}&returnlink=t".format(
+                    "uw/json_utf8_202007.ubs",
+                    request.POST["quarter"],
+                    request.POST["sln1"])
+            elif service == "grad":
+                set_url_querystr = True
+            elif service == "hfs":
+                url = "myuw/v1/{}".format(request.POST["uwnetid"])
+            elif re.match(r'^iasystem', service):
+                if url.endswith('/evaluation'):
+                    index = url.find('/')
+                    service = 'iasystem_' + url[:index]
+                    index += 1
+                    url = url[index:]
+                    set_url_querystr = True
+                    headers["Accept"] = "application/vnd.collection+json"
+            elif service == "myplan":
+                url = "student/api/plan/v1/{},{},1,{}".format(
+                    request.POST["year"],
+                    request.POST["quarter"],
+                    request.POST["uwregid"])
+            elif service == "libcurrics":
+                if "course" == url:
+                    url = "currics_db/api/v1/data/{}/{}/{}/{}/{}/{}".format(
+                        "course",
+                        request.POST["year"],
+                        request.POST["quarter"],
+                        request.POST["curriculum_abbr"],
+                        request.POST["course_number"],
+                        request.POST["section_id"])
+                elif "default" == url:
+                    url = "currics_db/api/v1/data/defaultGuide/{}".format(
+                        request.POST["campus"])
+            elif service == "libraries":
+                url = "mylibinfo/v1/?id={}".format(request.POST["uwnetid"])
+            elif service == "sws":
+                if "advisers" == url:
+                    url = "/student/v5/person/{}/advisers.json".format(
+                        request.POST["uwregid"])
+            elif service == "uwnetid":
+                if "password" == url:
+                    url = "nws/v1/uwnetid/{}/password".format(
+                        request.POST["uwnetid"])
+                elif "subscription" == url:
+                    url = "nws/v1/uwnetid/{}/subscription/60,64,105".format(
+                        request.POST["uwnetid"])
+
+            if set_url_querystr:
+                params = {k: v for k, v in request.POST.items() if (
+                    k != "csrfmiddlewaretoken")}
+                url = "{}?{}".format(url, urlencode(params))
+
+        except KeyError as ex:
+            error = "Missing reqired form value: {}".format(ex)
+        except UnicodeEncodeError as ex:
+            error = "Malformed form value: {}".format(ex)
+        finally:
+            if error:
+                context = self.get_error_context(error, 400, **kwargs)
+                return self.render_to_response(context)
+
+        kwargs["service"] = service
+        kwargs["url"] = url
+        kwargs["headers"] = headers
+
+        try:
+            context = self.get_context_data(**kwargs)
+        except (AttributeError, ImportError):
+            error = "Missing service: {}".format(service)
+            context = self.get_error_context(error, 404, **kwargs)
+
+        return self.render_to_response(context)
+
+    def get_error_context(self, error, status, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"content": error, "response_code": status})
+        return context

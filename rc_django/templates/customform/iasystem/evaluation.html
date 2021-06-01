@@ -1,4 +1,5 @@
-<form method="get" action="evaluation">
+<form method="post" action="{{form_action}}">
+{% csrf_token %}
 <div>
     <p>
     <label for="term_name">Term:</label>

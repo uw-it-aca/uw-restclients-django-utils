@@ -1,13 +1,15 @@
 # Copyright 2021 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-from django.conf.urls import url
-from rc_django.views import proxy, errors, customform
-
+from django.urls import re_path
+from rc_django.views.errors import DegradePerformanceView
+from rc_django.views.rest_proxy import RestSearchView, RestProxyView
 
 urlpatterns = [
-    url(r'errors', errors, name="restclients_errors"),
-    url(r'view/(\w+)/customform/(.*)$', customform,
-        name="restclients_customform"),
-    url(r'view/(\w+)/(.*)$', proxy, name="restclients_proxy"),
+    re_path(r'^errors',
+            DegradePerformanceView.as_view(), name="restclients_errors"),
+    re_path(r'^search/(\w+)/(.*)$',
+            RestSearchView.as_view(), name="restclients_customform"),
+    re_path(r'^view/(\w+)/(.*)$',
+            RestProxyView.as_view(), name="restclients_proxy"),
 ]

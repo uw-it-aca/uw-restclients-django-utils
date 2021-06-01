@@ -1,5 +1,6 @@
-<h1>Course Subject Guide Request (Proxy)</h1>
-    <form method="GET" action="course">
+<h1>Course Subject Guide Request</h1>
+    <form method="post" action="{{form_action}}">
+{% csrf_token %}
 
         <div class="form-group">
         Year: <input name="year" type="number" maxlength="4">
