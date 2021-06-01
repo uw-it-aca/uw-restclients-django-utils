@@ -150,7 +150,8 @@ class RestProxyView(RestView):
         logger.debug(
             "RestProxyView service: {}, url: {}, request.POST: {}".format(
                 service, url, request.POST))
-        set_url_querystr = False
+        error = None
+
         try:
             if service == "book":
                 url = "{}?quarter={}&sln1={}&returnlink=t".format(
@@ -158,7 +159,7 @@ class RestProxyView(RestView):
                     request.POST["quarter"],
                     request.POST["sln1"])
             elif service == "grad":
-                set_url_querystr = True
+                url = "{}?{}".format(url, request.POST.urlencode())
             elif service == "hfs":
                 url = "myuw/v1/{}".format(request.POST["uwnetid"])
             elif re.match(r'^iasystem', service):
@@ -167,8 +168,8 @@ class RestProxyView(RestView):
                     service = 'iasystem_' + url[:index]
                     index += 1
                     url = url[index:]
+                    url = "{}?{}".format(url, request.POST.urlencode())
                     headers["Accept"] = "application/vnd.collection+json"
-                    set_url_querystr = True
             elif service == "myplan":
                 url = "student/api/plan/v1/{},{},1,{}".format(
                     request.POST["year"],
@@ -201,11 +202,12 @@ class RestProxyView(RestView):
                         request.POST["uwnetid"])
         except KeyError as ex:
             error = "Missing reqired form value: {}".format(ex)
-            context = self.get_error_context(error, 400, **kwargs)
-            return self.render_to_response(context)
-
-        if set_url_querystr:
-            url = "{}?{}".format(url, request.POST.urlencode())
+        except UnicodeEncodeError as ex:
+            error = "Malformed form value: {}".format(ex)
+        finally:
+            if error:
+                context = self.get_error_context(error, 400, **kwargs)
+                return self.render_to_response(context)
 
         kwargs["service"] = service
         kwargs["url"] = url
