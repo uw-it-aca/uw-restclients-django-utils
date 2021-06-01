@@ -32,6 +32,9 @@ class RestSearchView(RestView):
         # Using args for these URLs for backwards-compatibility
         kwargs["service"] = args[0]
         kwargs["path"] = args[1] if len(args) > 1 else ""
+        logger.debug(
+            "RestSearchView GET service: {}, url: {}".format(
+                kwargs["service"], kwargs["path"]))
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
 
@@ -148,7 +151,9 @@ class RestProxyView(RestView):
         service = args[0]
         url = args[1] if len(args) > 1 else ""
         headers = {}
-
+        logger.debug(
+            "Enter POST service: {}, url: {}, inputs:{}".format(
+                service, url, request.POST))
         set_url_querystr = False
         try:
             if service == "book":
