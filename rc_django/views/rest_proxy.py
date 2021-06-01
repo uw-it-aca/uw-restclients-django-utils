@@ -5,6 +5,7 @@ from rc_django.views import RestView
 from rc_django.models import RestProxy
 from django.http import HttpResponse
 from django.template import loader, TemplateDoesNotExist
+from django.urls import reverse
 from userservice.user import UserService
 from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
 from base64 import b64encode
@@ -19,10 +20,12 @@ class RestSearchView(RestView):
 
     def get_context_data(self, **kwargs):
         service = kwargs.get("service")
-        path = kwargs.get("path")
+        path = kwargs.get("path", "")
 
         context = super().get_context_data(**kwargs)
-        context["local_template"] = "customform/{}/{}".format(service, path)
+        context["form_template"] = "customform/{}/{}".format(service, path)
+        context["form_action"] = reverse("restclients_proxy", args=[
+            service, path.replace(".html", "")])
         return context
 
     def get(self, request, *args, **kwargs):
@@ -149,16 +152,14 @@ class RestProxyView(RestView):
         set_url_querystr = False
         try:
             if service == "book":
-                if "store" == url:
-                    url = "{}?quarter={}&sln1={}&returnlink=t".format(
-                        "uw/json_utf8_202007.ubs",
-                        request.POST["quarter"],
-                        request.POST["sln1"])
+                url = "{}?quarter={}&sln1={}&returnlink=t".format(
+                    "uw/json_utf8_202007.ubs",
+                    request.POST["quarter"],
+                    request.POST["sln1"])
             elif service == "grad":
                 set_url_querystr = True
             elif service == "hfs":
-                if "accounts" in url:
-                    url = "myuw/v1/{}".format(request.POST["uwnetid"])
+                url = "myuw/v1/{}".format(request.POST["uwnetid"])
             elif re.match(r'^iasystem', service):
                 if url.endswith('/evaluation'):
                     index = url.find('/')
@@ -168,11 +169,10 @@ class RestProxyView(RestView):
                     headers["Accept"] = "application/vnd.collection+json"
                     set_url_querystr = True
             elif service == "myplan":
-                if "plan" == url:
-                    url = "student/api/plan/v1/{},{},1,{}".format(
-                        request.POST["year"],
-                        request.POST["quarter"],
-                        request.POST["uwregid"])
+                url = "student/api/plan/v1/{},{},1,{}".format(
+                    request.POST["year"],
+                    request.POST["quarter"],
+                    request.POST["uwregid"])
             elif service == "libcurrics":
                 if "course" == url:
                     url = "currics_db/api/v1/data/{}/{}/{}/{}/{}/{}".format(
@@ -182,13 +182,11 @@ class RestProxyView(RestView):
                         request.POST["curriculum_abbr"],
                         request.POST["course_number"],
                         request.POST["section_id"])
-                elif "defaultGuide" == url:
-                    url = "currics_db/api/v1/data/defaultGuide/{}".format(
+                elif "default" == url:
+                    url = "currics_db/api/v1/data/defaultguide/{}".format(
                         request.POST["campus"])
             elif service == "libraries":
-                if "accounts" == url:
-                    url = "mylibinfo/v1/?id={}".format(
-                        request.POST["uwnetid"])
+                url = "mylibinfo/v1/?id={}".format(request.POST["uwnetid"])
             elif service == "sws":
                 if "advisers" == url:
                     url = "/student/v5/person/{}/advisers.json".format(

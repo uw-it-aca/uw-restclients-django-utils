@@ -202,10 +202,26 @@ class ViewTest(TestCase):
             "Missing URL")
     def test_customform(self):
         url = reverse("restclients_customform", args=["hfs", "index.html"])
+
         get_user('test_view')
-        self.client.login(username='restclients_customform',
+        self.client.login(username='no_auth',
                           password=get_user_pass('test_view'))
 
         response = self.client.get(url)
         self.assertEquals(response.status_code, 302)
         self.assertTrue("next=/search/hfs/index.html" in response.url)
+
+        get_user('test_view')
+        self.client.login(username='test_view',
+                          password=get_user_pass('test_view'))
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn(b'<form method="post" action="/view/hfs/index">',
+                      response.content)
+
+        url = reverse("restclients_customform", args=[
+            "iasystem", "uw/api/v1/evaluation.html"])
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn(b'action="/view/iasystem/uw/api/v1/evaluation">',
+                      response.content)
