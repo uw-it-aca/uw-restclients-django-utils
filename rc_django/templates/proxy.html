@@ -15,11 +15,12 @@
 
         <div class="restclients-response-content">
             {% if search_template %}{% include search_template %}{% endif %}
-            {% if use_pre %}<pre>{% endif %}
-            {{ content|safe }}
-            {% if use_pre %}</pre>{% endif %}
             {% if is_image %}
-                <img src="data:image/jpeg;base64, {{ base_64 }}"/>
+                <img src="data:image/jpeg;base64, {{ content }}"/>
+            {% else %}
+              {% if use_pre %}<pre>{% endif %}
+              {{ content|safe }}
+              {% if use_pre %}</pre>{% endif %}
             {% endif %}
         </div>
 
