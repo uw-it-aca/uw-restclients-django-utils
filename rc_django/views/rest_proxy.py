@@ -5,6 +5,7 @@ from rc_django.views import RestView
 from rc_django.models import RestProxy
 from django.template import loader, TemplateDoesNotExist
 from django.urls import reverse
+from django.http import HttpResponse, HttpResponseRedirect
 from userservice.user import UserService
 from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
 from base64 import b64encode
@@ -12,30 +13,6 @@ import logging
 import re
 
 logger = logging.getLogger(__name__)
-
-
-class RestSearchView(RestView):
-    template_name = "customform.html"
-
-    def get_context_data(self, **kwargs):
-        service = kwargs.get("service")
-        path = kwargs.get("path", "")
-
-        context = super().get_context_data(**kwargs)
-        context["form_template"] = "customform/{}/{}".format(service, path)
-        context["form_action"] = reverse("restclients_proxy", args=[
-            service, path.replace(".html", "")])
-        return context
-
-    def get(self, request, *args, **kwargs):
-        """
-        Renders a custom form for searching a REST service.
-        """
-        # Using args for these URLs for backwards-compatibility
-        kwargs["service"] = args[0]
-        kwargs["path"] = args[1] if len(args) > 1 else ""
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
 
 
 class RestProxyView(RestView):
@@ -52,26 +29,23 @@ class RestProxyView(RestView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         service = kwargs.get("service")
-        url = kwargs.get("url", "")
+        service_name = service
+        url = "/" + quote(kwargs.get("url", ""))
         headers = kwargs.get("headers", {})
-        logger.debug(
-            "RestProxyView get_context_data service: {}, url: {}".format(
-                service, url))
+        use_pre = False
+        is_image = False
         user_service = UserService()
 
-        if kwargs.get("actas_user"):
-            headers["X-UW-Act-as"] = user_service.get_original_user()
-
-        url = "/{}".format(quote(url))
-        service_name = service
         if service == 'iasystem':
+            headers["Accept"] = "application/vnd.collection+json"
             service_name = 'iasystem_uw'
+        elif service == "sws" or service == "gws":
+            headers["X-UW-Act-as"] = user_service.get_original_user()
+        elif service == "calendar":
+            use_pre = True
 
         proxy = RestProxy(service_name)
         response = proxy.get_api_response(url, headers)
-
-        use_pre = True if (service == "calendar") else False
-        is_image = False
 
         if (response.status == 200 and
                 re.match(r'/idcard/v1/photo/[0-9A-F]{32}', url)):
@@ -119,48 +93,61 @@ class RestProxyView(RestView):
         Fetch an API resource and render it, formatted for a browser.
         """
         # Using args for these URLs for backwards-compatibility
-        service = args[0]
-        url = args[1] if len(args) > 1 else ""
-
-        if service == "sws" or service == "gws":
-            kwargs["actas_user"] = True
+        kwargs["service"] = args[0]
+        kwargs["url"] = args[1] if len(args) > 1 else ""
 
         if request.GET:
-            url = "{}?{}".format(url, urlencode(request.GET))
+            kwargs["url"] += "?" + urlencode(request.GET)
 
-        kwargs["service"] = service
-        kwargs["url"] = url
         try:
             context = self.get_context_data(**kwargs)
         except (AttributeError, ImportError):
-            error = "Missing service: {}".format(service)
-            context = self.get_error_context(error, 404, **kwargs)
+            return HttpResponse(
+                "Missing service: {}".format(kwargs["service"]), status=404)
 
+        return self.render_to_response(context)
+
+
+class RestSearchView(RestView):
+    template_name = "customform.html"
+
+    def get_context_data(self, **kwargs):
+        service = kwargs.get("service")
+        path = kwargs.get("path", "")
+
+        context = super().get_context_data(**kwargs)
+        context["form_template"] = "customform/{}/{}".format(service, path)
+        context["form_action"] = reverse("restclients_customform", args=[
+            service, path.replace(".html", "")])
+        return context
+
+    def get(self, request, *args, **kwargs):
+        """
+        Renders a custom form for searching a REST service.
+        """
+        # Using args for these URLs for backwards-compatibility
+        kwargs["service"] = args[0]
+        kwargs["path"] = args[1] if len(args) > 1 else ""
+        context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         """
-        Entry point for custom search forms:
-          1. Convert form data to actual API urls,
-          2. Fetch the API resource and render it, formatted for a browser.
+        Entry point for custom search form submissions.
+        Convert form data to actual API urls, and redirect to proxy view.
         """
         service = args[0]
         url = args[1] if len(args) > 1 else ""
-        headers = {}
-        logger.debug(
-            "RestProxyView service: {}, url: {}, request.POST: {}".format(
-                service, url, request.POST))
-        set_url_querystr = False
-        error = None
+        params = {k: v for k, v in request.POST.items() if (
+            k != "csrfmiddlewaretoken")}
+        requires_query_params = False
 
         try:
             if service == "book":
-                url = "{}?quarter={}&sln1={}&returnlink=t".format(
-                    "uw/json_utf8_202007.ubs",
-                    request.POST["quarter"],
-                    request.POST["sln1"])
+                url = "uw/json_utf8_202007.ubs"
+                requires_query_params = True
             elif service == "grad":
-                set_url_querystr = True
+                requires_query_params = True
             elif service == "hfs":
                 url = "myuw/v1/{}".format(request.POST["uwnetid"])
             elif re.match(r'^iasystem', service):
@@ -169,8 +156,7 @@ class RestProxyView(RestView):
                     service = 'iasystem_' + url[:index]
                     index += 1
                     url = url[index:]
-                    set_url_querystr = True
-                    headers["Accept"] = "application/vnd.collection+json"
+                    requires_query_params = True
             elif service == "myplan":
                 url = "student/api/plan/v1/{},{},1,{}".format(
                     request.POST["year"],
@@ -189,7 +175,8 @@ class RestProxyView(RestView):
                     url = "currics_db/api/v1/data/defaultGuide/{}".format(
                         request.POST["campus"])
             elif service == "libraries":
-                url = "mylibinfo/v1/?id={}".format(request.POST["uwnetid"])
+                url = "mylibinfo/v1/"
+                requires_query_params = True
             elif service == "sws":
                 if "advisers" == url:
                     url = "/student/v5/person/{}/advisers.json".format(
@@ -202,33 +189,11 @@ class RestProxyView(RestView):
                     url = "nws/v1/uwnetid/{}/subscription/60,64,105".format(
                         request.POST["uwnetid"])
 
-            if set_url_querystr:
-                params = {k: v for k, v in request.POST.items() if (
-                    k != "csrfmiddlewaretoken")}
-                url = "{}?{}".format(url, urlencode(params))
-
         except KeyError as ex:
-            error = "Missing reqired form value: {}".format(ex)
-        except UnicodeEncodeError as ex:
-            error = "Malformed form value: {}".format(ex)
-        finally:
-            if error:
-                context = self.get_error_context(error, 400, **kwargs)
-                return self.render_to_response(context)
+            return HttpResponse("Missing reqired form value: {}".format(ex),
+                                status=400)
 
-        kwargs["service"] = service
-        kwargs["url"] = url
-        kwargs["headers"] = headers
-
-        try:
-            context = self.get_context_data(**kwargs)
-        except (AttributeError, ImportError):
-            error = "Missing service: {}".format(service)
-            context = self.get_error_context(error, 404, **kwargs)
-
-        return self.render_to_response(context)
-
-    def get_error_context(self, error, status, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"content": error, "response_code": status})
-        return context
+        url = reverse("restclients_proxy", args=[service, url])
+        if requires_query_params:
+            url += "?" + urlencode(params)
+        return HttpResponseRedirect(url)

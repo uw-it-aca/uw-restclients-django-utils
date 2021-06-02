@@ -10,8 +10,6 @@ from django.urls import reverse
 from restclients_core.dao import DAO, MockDAO
 from restclients_core.models import MockHTTP
 from rc_django.views.rest_proxy import RestSearchView, RestProxyView
-from unittest import skipIf
-import mock
 
 
 class TEST_DAO(DAO):
@@ -85,21 +83,16 @@ class ViewNoAuthTest(TestCase):
 
 @override_settings(
     RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
-class ViewTest(TestCase):
-    def test_get_context_data(self):
-        context = RestSearchView().get_context_data(**{})
-        self.assertEqual(context["wrapper_template"], "proxy_wrapper.html")
-
+class RestProxyViewTest(TestCase):
     def test_bad_url(self):
         # Something was sending urls that should have been
         # ...=&reg_id=... into ...=®_id=A
         # That should be fixed, but in the mean time we shouldn't crash
-        url = reverse("restclients_proxy", args=["test", "test/v2"])
+        url = reverse("restclients_proxy", args=[
+            "test", "test/v2?i=u\xae_id=A"])
         get_user('test_view')
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
-
-        url = "{}?i=u\xae_id=A".format(url)
 
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -109,20 +102,18 @@ class ViewTest(TestCase):
         self.assertEqual(RestProxyView.format_search_params(url), {
             'a': 'one', 'b': 'two', 'c': 'one two'})
 
-    @skipIf(missing_url("restclients_proxy", args=["test", "ok"]),
-            "restclients urls not configured")
     def test_support_links(self):
         url = reverse("restclients_proxy", args=["test", "test/v1"])
         get_user('test_view')
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
 
-        # GET
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
 
-        # POST
-        response = self.client.post(url)
+        url = reverse("restclients_proxy", args=[
+            "test", "test/v1?a=one&b=two&c=one%20two"])
+        response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
 
     def test_service_errors(self):
@@ -138,73 +129,87 @@ class ViewTest(TestCase):
         # Missing service
         url = reverse("restclients_proxy", args=["fake", "test/v1"])
         response = self.client.get(url)
+        self.assertEquals(response.status_code, 404)
         self.assertIn(b"Missing service: fake", response.content)
 
-    @mock.patch.object(RestProxyView, "get_context_data")
-    def test_search_post(self, mock_context_data):
-        mock_context_data.return_value = {
-            "wrapper_template": "proxy_wrapper.html"}
 
+@override_settings(
+    RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
+class RestSearchViewTest(TestCase):
+    def test_get_context_data(self):
+        context = RestSearchView().get_context_data(**{})
+        self.assertEqual(context["wrapper_template"], "proxy_wrapper.html")
+
+    def test_search_post(self):
         get_user('test_view')
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
 
         # hfs, missing form values
-        url = reverse("restclients_proxy", args=["hfs", "accounts"])
+        url = reverse("restclients_customform", args=["hfs", "accounts"])
         response = self.client.post(url)
+        self.assertEquals(response.status_code, 400)
         self.assertIn(b"Missing reqired form value: 'uwnetid'",
                       response.content)
 
-        url = reverse("restclients_proxy", args=["hfs", "accounts"])
+        # hfs
+        url = reverse("restclients_customform", args=["hfs", "accounts"])
+        response = self.client.post(url, {"uwnetid": "\xae"})
+        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.url, "/view/hfs/myuw/v1/%C2%AE")
+
+        url = reverse("restclients_customform", args=["hfs", "accounts"])
         response = self.client.post(url, {"uwnetid": "javerage"})
-        mock_context_data.assert_called_with(
-            service="hfs", url="myuw/v1/javerage", headers={})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/view/hfs/myuw/v1/javerage")
 
         # bookstore
-        url = reverse("restclients_proxy", args=["book", "store"])
-        response = self.client.post(url, {"sln1": "123", "quarter": "spring"})
-        mock_context_data.assert_called_with(
-            service="book",
-            url="uw/json_utf8_202007.ubs?quarter=spring&sln1=123&returnlink=t",
-            headers={})
+        url = reverse("restclients_customform", args=["book", "store"])
+        response = self.client.post(url, {
+            "sln1": "123", "quarter": "spring", "returnlink": "t"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, (
+            "/view/book/uw/json_utf8_202007.ubs?"
+            "sln1=123&quarter=spring&returnlink=t"))
 
         # myplan
-        url = reverse("restclients_proxy", args=["myplan", "plan"])
+        url = reverse("restclients_customform", args=["myplan", "plan"])
         response = self.client.post(url, {
             "uwregid": "ABC", "year": "2013", "quarter": "spring"})
-        mock_context_data.assert_called_with(
-            service="myplan", url="student/api/plan/v1/2013,spring,1,ABC",
-            headers={})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url,
+                         "/view/myplan/student/api/plan/v1/2013,spring,1,ABC")
 
         # libraries
-        url = reverse("restclients_proxy", args=["libraries", "accounts"])
-        response = self.client.post(url, {"uwnetid": "javerage"})
-        mock_context_data.assert_called_with(
-            service="libraries", url="mylibinfo/v1/?id=javerage", headers={})
+        url = reverse("restclients_customform", args=["libraries", "accounts"])
+        response = self.client.post(url, {"id": "javerage"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url,
+                         "/view/libraries/mylibinfo/v1/?id=javerage")
 
         # iasystem
-        url = reverse("restclients_proxy", args=[
+        url = reverse("restclients_customform", args=[
             "iasystem_uw", "uw/api/v1/evaluation"])
         response = self.client.post(url, {"student_id": "123456"})
-        mock_context_data.assert_called_with(
-            service="iasystem_uw", url="api/v1/evaluation?student_id=123456",
-            headers={"Accept": "application/vnd.collection+json"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, (
+            "/view/iasystem_uw/api/v1/evaluation?student_id=123456"))
 
         # uwnetid
-        url = reverse("restclients_proxy", args=["uwnetid", "password"])
+        url = reverse("restclients_customform", args=["uwnetid", "password"])
         response = self.client.post(url, {"uwnetid": "javerage"})
-        mock_context_data.assert_called_with(
-            service="uwnetid", url="nws/v1/uwnetid/javerage/password",
-            headers={})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url,
+                         "/view/uwnetid/nws/v1/uwnetid/javerage/password")
 
         # grad
-        url = reverse("restclients_proxy", args=[
+        url = reverse("restclients_customform", args=[
             "grad", "services/students/v1/api/committee"])
         response = self.client.post(url, {
             "id": "12345", "csrfmiddlewaretoken": "0000000"})
-        mock_context_data.assert_called_with(
-            service="grad", url="services/students/v1/api/committee?id=12345",
-            headers={})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, (
+            "/view/grad/services/students/v1/api/committee?id=12345"))
 
     def test_customform(self):
         url = reverse("restclients_customform", args=["hfs", "index.html"])
@@ -224,7 +229,7 @@ class ViewTest(TestCase):
                           password=get_user_pass('test_view'))
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
-        self.assertIn(b'<form method="post" action="/view/hfs/index">',
+        self.assertIn(b'<form method="post" action="/search/hfs/index">',
                       response.content)
 
         # iasystem
@@ -232,5 +237,5 @@ class ViewTest(TestCase):
             "iasystem", "uw/api/v1/evaluation.html"])
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
-        self.assertIn(b'action="/view/iasystem/uw/api/v1/evaluation">',
+        self.assertIn(b'action="/search/iasystem/uw/api/v1/evaluation">',
                       response.content)
