@@ -82,7 +82,7 @@ class RestProxyView(RestView):
                                                        search_template_path)
             loader.get_template(search_template)
             context["search_template"] = search_template
-            context["search"] = format_search_params(url)
+            context["search"] = self.format_search_params(url)
         except TemplateDoesNotExist:
             context["search_template"] = None
 
