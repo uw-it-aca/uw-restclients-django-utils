@@ -179,7 +179,7 @@ class RestSearchView(RestView):
                 requires_query_params = True
             elif service == "sws":
                 if "advisers" == url:
-                    url = "/student/v5/person/{}/advisers.json".format(
+                    url = "student/v5/person/{}/advisers.json".format(
                         request.POST["uwregid"])
             elif service == "uwnetid":
                 if "password" == url:
