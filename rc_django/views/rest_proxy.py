@@ -51,7 +51,7 @@ class RestProxyView(RestView):
                 re.match(r'/idcard/v1/photo/[0-9A-F]{32}', url)):
             # Handle known images
             is_image = True
-            content = b64encode(response.data)
+            content = b64encode(response.data).decode("utf-8")
         elif use_pre:
             content = response.data
         else:
