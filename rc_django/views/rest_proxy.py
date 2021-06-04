@@ -110,6 +110,7 @@ class RestProxyView(RestView):
 
 class RestSearchView(RestView):
     template_name = "customform.html"
+    form_action_url = "restclients_customform"
 
     def get_context_data(self, **kwargs):
         service = kwargs.get("service")
@@ -117,7 +118,7 @@ class RestSearchView(RestView):
 
         context = super().get_context_data(**kwargs)
         context["form_template"] = "customform/{}/{}".format(service, path)
-        context["form_action"] = reverse("restclients_customform", args=[
+        context["form_action"] = reverse(self.form_action_url, args=[
             service, path.replace(".html", "")])
         return context
 
