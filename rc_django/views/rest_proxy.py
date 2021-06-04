@@ -117,7 +117,14 @@ class RestSearchView(RestView):
         path = kwargs.get("path", "")
 
         context = super().get_context_data(**kwargs)
-        context["form_template"] = "customform/{}/{}".format(service, path)
+
+        form_path = "customform/{}/{}".format(service, path)
+        try:
+            loader.get_template("restclients/{}".format(form_path))
+            context["form_template"] = "restclients/{}".format(form_path)
+        except TemplateDoesNotExist:
+            context["form_template"] = form_path
+
         context["form_action"] = reverse(self.form_action_url, args=[
             service, path.replace(".html", "")])
         return context
