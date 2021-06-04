@@ -219,7 +219,8 @@ class RestSearchViewTest(TestCase):
             "csrfmiddlewaretoken": "0000000"})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, (
-            "/view/sws/student/v5/notice/12345678123456781234567812345678.json"))
+            "/view/sws/student/v5/notice/" +
+            "12345678123456781234567812345678.json"))
 
     def test_customform(self):
         url = reverse("restclients_customform", args=["hfs", "index.html"])
