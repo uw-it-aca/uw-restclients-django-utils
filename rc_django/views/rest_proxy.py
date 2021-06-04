@@ -156,26 +156,7 @@ class RestSearchView(RestView):
         return HttpResponseRedirect(url)
 
     def get_proxy_url(self, request, service, url):
-        if service == "book":
-            url = "uw/json_utf8_202007.ubs"
-            self.requires_query_params = True
-        elif service == "grad":
-            self.requires_query_params = True
-        elif service == "hfs":
-            url = "myuw/v1/{}".format(request.POST["uwnetid"])
-        elif re.match(r'^iasystem', service):
-            if url.endswith('/evaluation'):
-                index = url.find('/')
-                service = 'iasystem_' + url[:index]
-                index += 1
-                url = url[index:]
-                self.requires_query_params = True
-        elif service == "myplan":
-            url = "student/api/plan/v1/{},{},1,{}".format(
-                request.POST["year"],
-                request.POST["quarter"],
-                request.POST["uwregid"])
-        elif service == "libcurrics":
+        if service == "libcurrics":
             if "course" == url:
                 url = "currics_db/api/v1/data/{}/{}/{}/{}/{}/{}".format(
                     "course",
@@ -190,19 +171,5 @@ class RestSearchView(RestView):
         elif service == "libraries":
             url = "mylibinfo/v1/"
             self.requires_query_params = True
-        elif service == "sws":
-            if "advisers" == url:
-                url = "student/v5/person/{}/advisers.json".format(
-                    request.POST["uwregid"])
-            elif "notices" == url:
-                url = "student/v5/notice/{}.json".format(
-                    request.POST["uwregid"])
-        elif service == "uwnetid":
-            if "password" == url:
-                url = "nws/v1/uwnetid/{}/password".format(
-                    request.POST["uwnetid"])
-            elif "subscription" == url:
-                url = "nws/v1/uwnetid/{}/subscription/60,64,105".format(
-                    request.POST["uwnetid"])
 
         return url
