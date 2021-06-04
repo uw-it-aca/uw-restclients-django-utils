@@ -138,24 +138,24 @@ class RestSearchView(RestView):
         """
         service = args[0]
         url = args[1] if len(args) > 1 else ""
-        self.requires_query_params = False
 
         try:
-            url = self.get_proxy_url(request, service, url)
+            url, params = self.get_proxy_url(request, service, url)
         except KeyError as ex:
             return HttpResponse("Missing reqired form value: {}".format(ex),
                                 status=400)
 
         url = reverse("restclients_proxy", args=[service, url])
-
-        if self.requires_query_params:
-            params = {k: v for k, v in request.POST.items() if (
-                k != "csrfmiddlewaretoken")}
+        if params:
             url += "?" + urlencode(params)
-
         return HttpResponseRedirect(url)
 
+    def format_params(self, request):
+        return {k: v for k, v in request.POST.items() if (
+            k != "csrfmiddlewaretoken")}
+
     def get_proxy_url(self, request, service, url):
+        params = None
         if service == "libcurrics":
             if "course" == url:
                 url = "currics_db/api/v1/data/{}/{}/{}/{}/{}/{}".format(
@@ -170,6 +170,6 @@ class RestSearchView(RestView):
                     request.POST["campus"])
         elif service == "libraries":
             url = "mylibinfo/v1/"
-            self.requires_query_params = True
+            params = self.format_params(request)
 
-        return url
+        return url, params
