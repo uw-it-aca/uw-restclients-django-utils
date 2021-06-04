@@ -123,6 +123,7 @@ class RestSearchView(RestView):
             loader.get_template("restclients/{}".format(form_path))
             context["form_template"] = "restclients/{}".format(form_path)
         except TemplateDoesNotExist:
+            loader.get_template(form_path)
             context["form_template"] = form_path
 
         context["form_action"] = reverse(self.form_action_url, args=[
@@ -136,7 +137,12 @@ class RestSearchView(RestView):
         # Using args for these URLs for backwards-compatibility
         kwargs["service"] = args[0]
         kwargs["path"] = args[1] if len(args) > 1 else ""
-        context = self.get_context_data(**kwargs)
+
+        try:
+            context = self.get_context_data(**kwargs)
+        except TemplateDoesNotExist as ex:
+            return HttpResponse("Missing template: {}".format(ex), status=404)
+
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
