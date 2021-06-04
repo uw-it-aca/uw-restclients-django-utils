@@ -138,65 +138,38 @@ class RestSearchView(RestView):
         """
         service = args[0]
         url = args[1] if len(args) > 1 else ""
-        params = {k: v for k, v in request.POST.items() if (
-            k != "csrfmiddlewaretoken")}
-        requires_query_params = False
 
         try:
-            if service == "book":
-                url = "uw/json_utf8_202007.ubs"
-                requires_query_params = True
-            elif service == "grad":
-                requires_query_params = True
-            elif service == "hfs":
-                url = "myuw/v1/{}".format(request.POST["uwnetid"])
-            elif re.match(r'^iasystem', service):
-                if url.endswith('/evaluation'):
-                    index = url.find('/')
-                    service = 'iasystem_' + url[:index]
-                    index += 1
-                    url = url[index:]
-                    requires_query_params = True
-            elif service == "myplan":
-                url = "student/api/plan/v1/{},{},1,{}".format(
-                    request.POST["year"],
-                    request.POST["quarter"],
-                    request.POST["uwregid"])
-            elif service == "libcurrics":
-                if "course" == url:
-                    url = "currics_db/api/v1/data/{}/{}/{}/{}/{}/{}".format(
-                        "course",
-                        request.POST["year"],
-                        request.POST["quarter"],
-                        request.POST["curriculum_abbr"],
-                        request.POST["course_number"],
-                        request.POST["section_id"])
-                elif "default" == url:
-                    url = "currics_db/api/v1/data/defaultGuide/{}".format(
-                        request.POST["campus"])
-            elif service == "libraries":
-                url = "mylibinfo/v1/"
-                requires_query_params = True
-            elif service == "sws":
-                if "advisers" == url:
-                    url = "student/v5/person/{}/advisers.json".format(
-                        request.POST["uwregid"])
-                elif "notices" == url:
-                    url = "student/v5/notice/{}.json".format(
-                        request.POST["uwregid"])
-            elif service == "uwnetid":
-                if "password" == url:
-                    url = "nws/v1/uwnetid/{}/password".format(
-                        request.POST["uwnetid"])
-                elif "subscription" == url:
-                    url = "nws/v1/uwnetid/{}/subscription/60,64,105".format(
-                        request.POST["uwnetid"])
-
+            url, params = self.get_proxy_url(request, service, url)
         except KeyError as ex:
             return HttpResponse("Missing reqired form value: {}".format(ex),
                                 status=400)
 
         url = reverse("restclients_proxy", args=[service, url])
-        if requires_query_params:
+        if params:
             url += "?" + urlencode(params)
         return HttpResponseRedirect(url)
+
+    def format_params(self, request):
+        return {k: v for k, v in request.POST.items() if (
+            k != "csrfmiddlewaretoken")}
+
+    def get_proxy_url(self, request, service, url):
+        params = None
+        if service == "libcurrics":
+            if "course" == url:
+                url = "currics_db/api/v1/data/{}/{}/{}/{}/{}/{}".format(
+                    "course",
+                    request.POST["year"],
+                    request.POST["quarter"],
+                    request.POST["curriculum_abbr"],
+                    request.POST["course_number"],
+                    request.POST["section_id"])
+            elif "default" == url:
+                url = "currics_db/api/v1/data/defaultGuide/{}".format(
+                    request.POST["campus"])
+        elif service == "libraries":
+            url = "mylibinfo/v1/"
+            params = self.format_params(request)
+
+        return url, params

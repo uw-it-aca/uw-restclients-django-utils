@@ -145,108 +145,50 @@ class RestSearchViewTest(TestCase):
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
 
-        # hfs, missing form values
-        url = reverse("restclients_customform", args=["hfs", "accounts"])
+        # missing form values
+        url = reverse("restclients_customform", args=["libcurrics", "default"])
         response = self.client.post(url)
         self.assertEquals(response.status_code, 400)
-        self.assertIn(b"Missing reqired form value: 'uwnetid'",
+        self.assertIn(b"Missing reqired form value: 'campus'",
                       response.content)
 
-        # hfs
-        url = reverse("restclients_customform", args=["hfs", "accounts"])
-        response = self.client.post(url, {"uwnetid": "\xae"})
+        url = reverse("restclients_customform", args=["libcurrics", "default"])
+        response = self.client.post(url, {"campus": "sea"})
         self.assertEquals(response.status_code, 302)
-        self.assertEqual(response.url, "/view/hfs/myuw/v1/%C2%AE")
+        self.assertEqual(
+            response.url,
+            "/view/libcurrics/currics_db/api/v1/data/defaultGuide/sea")
 
-        url = reverse("restclients_customform", args=["hfs", "accounts"])
-        response = self.client.post(url, {"uwnetid": "javerage"})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/view/hfs/myuw/v1/javerage")
-
-        # bookstore
-        url = reverse("restclients_customform", args=["book", "store"])
-        response = self.client.post(url, {
-            "sln1": "123", "quarter": "spring", "returnlink": "t"})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, (
-            "/view/book/uw/json_utf8_202007.ubs?"
-            "sln1=123&quarter=spring&returnlink=t"))
-
-        # myplan
-        url = reverse("restclients_customform", args=["myplan", "plan"])
-        response = self.client.post(url, {
-            "uwregid": "ABC", "year": "2013", "quarter": "spring"})
-        self.assertEqual(response.status_code, 302)
+        url = reverse("restclients_customform", args=["libraries", "accounts"])
+        response = self.client.post(url, {"id": "\xae"})
+        self.assertEquals(response.status_code, 302)
         self.assertEqual(response.url,
-                         "/view/myplan/student/api/plan/v1/2013,spring,1,ABC")
+                         "/view/libraries/mylibinfo/v1/?id=%C2%AE")
 
-        # libraries
         url = reverse("restclients_customform", args=["libraries", "accounts"])
         response = self.client.post(url, {"id": "javerage"})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url,
                          "/view/libraries/mylibinfo/v1/?id=javerage")
 
-        # iasystem
-        url = reverse("restclients_customform", args=[
-            "iasystem_uw", "uw/api/v1/evaluation"])
-        response = self.client.post(url, {"student_id": "123456"})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, (
-            "/view/iasystem_uw/api/v1/evaluation?student_id=123456"))
-
-        # uwnetid
-        url = reverse("restclients_customform", args=["uwnetid", "password"])
-        response = self.client.post(url, {"uwnetid": "javerage"})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url,
-                         "/view/uwnetid/nws/v1/uwnetid/javerage/password")
-
-        # grad
-        url = reverse("restclients_customform", args=[
-            "grad", "services/students/v1/api/committee"])
-        response = self.client.post(url, {
-            "id": "12345", "csrfmiddlewaretoken": "0000000"})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, (
-            "/view/grad/services/students/v1/api/committee?id=12345"))
-
-        # notices
-        url = reverse("restclients_customform", args=[
-            "sws", "notices"])
-        response = self.client.post(url, {
-            "uwregid": "12345678123456781234567812345678",
-            "csrfmiddlewaretoken": "0000000"})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, (
-            "/view/sws/student/v5/notice/" +
-            "12345678123456781234567812345678.json"))
-
     def test_customform(self):
-        url = reverse("restclients_customform", args=["hfs", "index.html"])
+        url = reverse("restclients_customform", args=[
+            "libraries", "index.html"])
 
         get_user('test_view')
         self.client.login(username='no_auth',
                           password=get_user_pass('test_view'))
 
-        # hfs, no auth
+        # no auth
         response = self.client.get(url)
         self.assertEquals(response.status_code, 302)
-        self.assertTrue("next=/search/hfs/index.html" in response.url)
+        self.assertTrue("next=/search/libraries/index.html" in response.url)
 
-        # hfs, auth
+        # with auth
         get_user('test_view')
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
-        self.assertIn(b'<form method="post" action="/search/hfs/index">',
-                      response.content)
-
-        # iasystem
-        url = reverse("restclients_customform", args=[
-            "iasystem", "uw/api/v1/evaluation.html"])
-        response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
-        self.assertIn(b'action="/search/iasystem/uw/api/v1/evaluation">',
+        self.assertIn(b'<form method="post" action="/search/libraries/index">',
                       response.content)
