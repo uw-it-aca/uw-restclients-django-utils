@@ -181,6 +181,9 @@ class RestSearchView(RestView):
                 if "advisers" == url:
                     url = "student/v5/person/{}/advisers.json".format(
                         request.POST["uwregid"])
+                elif "notices" == url:
+                    url = "student/v5/notice/{}.json".format(
+                        request.POST["uwregid"])
             elif service == "uwnetid":
                 if "password" == url:
                     url = "nws/v1/uwnetid/{}/password".format(

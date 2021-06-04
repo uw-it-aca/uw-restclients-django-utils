@@ -211,6 +211,16 @@ class RestSearchViewTest(TestCase):
         self.assertEqual(response.url, (
             "/view/grad/services/students/v1/api/committee?id=12345"))
 
+        # notices
+        url = reverse("restclients_customform", args=[
+            "sws", "notices"])
+        response = self.client.post(url, {
+            "uwregid": "12345678123456781234567812345678",
+            "csrfmiddlewaretoken": "0000000"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, (
+            "/view/sws/student/v5/notice/12345678123456781234567812345678.json"))
+
     def test_customform(self):
         url = reverse("restclients_customform", args=["hfs", "index.html"])
 
