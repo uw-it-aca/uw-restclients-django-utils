@@ -9,10 +9,10 @@ from django.http import HttpResponse, HttpResponseRedirect
 from userservice.user import UserService
 from urllib.parse import quote, unquote, urlencode, urlparse, parse_qs
 from base64 import b64encode
-import logging
+from logging import getLogger
 import re
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 class RestProxyView(RestView):
@@ -29,14 +29,14 @@ class RestProxyView(RestView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         service = kwargs.get("service")
-        service_name = service
-        url = "/" + quote(kwargs.get("url", ""))
+        url = kwargs.get("url")
         headers = kwargs.get("headers", {})
+        service_name = service
         use_pre = False
         is_image = False
         user_service = UserService()
 
-        if service == 'iasystem':
+        if service == "iasystem":
             headers["Accept"] = "application/vnd.collection+json"
             service_name = 'iasystem_uw'
         elif service == "sws" or service == "gws":
@@ -48,7 +48,7 @@ class RestProxyView(RestView):
         response = proxy.get_api_response(url, headers)
 
         if (response.status == 200 and
-                re.match(r'/idcard/v1/photo/[0-9A-F]{32}', url)):
+                re.match(r"/idcard/v1/photo/[0-9A-F]{32}", url)):
             # Handle known images
             is_image = True
             content = b64encode(response.data).decode("utf-8")
@@ -94,10 +94,16 @@ class RestProxyView(RestView):
         """
         # Using args for these URLs for backwards-compatibility
         kwargs["service"] = args[0]
-        kwargs["url"] = args[1] if len(args) > 1 else ""
+        kwargs["url"] = "/" + (args[1] if len(args) > 1 else "")
 
         if request.GET:
             kwargs["url"] += "?" + urlencode(request.GET)
+        else:
+            try:
+                path, qs = kwargs["url"].split("?")
+                kwargs["url"] = "?".join([quote(path), qs])
+            except ValueError:
+                pass
 
         try:
             context = self.get_context_data(**kwargs)
