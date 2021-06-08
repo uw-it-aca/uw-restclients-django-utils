@@ -160,7 +160,7 @@ class RestSearchView(RestView):
         url = args[1] if len(args) > 1 else ""
 
         try:
-            url, params = self.get_proxy_url(request, service, url)
+            service, url, params = self.get_proxy_url(request, service, url)
         except KeyError as ex:
             return HttpResponse("Missing reqired form value: {}".format(ex),
                                 status=400)
@@ -192,4 +192,4 @@ class RestSearchView(RestView):
             url = "mylibinfo/v1/"
             params = self.format_params(request)
 
-        return url, params
+        return service, url, params
