@@ -57,7 +57,6 @@ class RestProxy():
             response = MockHTTP()
             response.status = ex.status
             response.data = ex.msg
-            logger.error("{}".format(ex))
         self._request_end = time()
         self.response = response
         return self.response

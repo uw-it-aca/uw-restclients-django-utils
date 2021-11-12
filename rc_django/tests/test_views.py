@@ -137,8 +137,11 @@ class RestProxyViewTest(TestCase):
     RESTCLIENTS_ADMIN_AUTH_MODULE='rc_django.tests.can_proxy_restclient')
 class RestSearchViewTest(TestCase):
     def test_get_context_data(self):
-        context = RestSearchView().get_context_data(**{})
+        kwargs = {"service": "libraries", "path": "index.html"}
+        context = RestSearchView().get_context_data(**kwargs)
         self.assertEqual(context["wrapper_template"], "proxy_wrapper.html")
+        self.assertEqual(context["form_template"],
+                         "customform/libraries/index.html")
 
     def test_search_post(self):
         get_user('test_view')
@@ -192,3 +195,7 @@ class RestSearchViewTest(TestCase):
         self.assertEquals(response.status_code, 200)
         self.assertIn(b'<form method="post" action="/search/libraries/index">',
                       response.content)
+
+        url = reverse("restclients_customform", args=["fake", "index.html"])
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 404)
