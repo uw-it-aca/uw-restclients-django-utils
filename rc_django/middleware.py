@@ -1,29 +1,17 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+
+from django.utils.deprecation import MiddlewareMixin
 from restclients_core.util.performance import PerformanceDegradation
 from rc_django.models import DegradePerformance
 
 
-class EnableServiceDegradationMiddleware(object):
+class EnableServiceDegradationMiddleware(MiddlewareMixin):
     """
     Makes it so an admin tool can set specific services to either be slower,
     have an error response code, or custom content.
     """
-    # Django 1.10 MIDDLEWARE compat
-    def __init__(self, get_response=None):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        response = None
-        if hasattr(self, 'process_request'):
-            response = self.process_request(request)
-        if not response:
-            response = self.get_response(request)
-        if hasattr(self, 'process_response'):
-            response = self.process_response(request, response)
-        return response
-
     def process_request(self, request):
         PerformanceDegradation.clear_problems()
         if "RESTCLIENTS_ERRORS" not in request.session:

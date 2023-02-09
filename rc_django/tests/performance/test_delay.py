@@ -1,5 +1,6 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
+
 
 from django.test import TestCase, RequestFactory
 from django.test.utils import override_settings
@@ -14,6 +15,7 @@ from rc_django.views.errors import DegradePerformanceView
 from rc_django.middleware import EnableServiceDegradationMiddleware
 from rc_django.tests.test_views import missing_url
 import time
+import mock
 
 
 class DELAY_DAO(DAO):
@@ -46,14 +48,16 @@ class DegradedTestCase(TestCase):
         })
         r2 = RequestFactory().get("/")
 
-        SessionMiddleware().process_request(r1)
-        SessionMiddleware().process_request(r2)
+        get_response = mock.MagicMock()
 
-        AuthenticationMiddleware().process_request(r1)
-        UserServiceMiddleware().process_request(r1)
+        SessionMiddleware(get_response).process_request(r1)
+        SessionMiddleware(get_response).process_request(r2)
 
-        AuthenticationMiddleware().process_request(r2)
-        UserServiceMiddleware().process_request(r2)
+        AuthenticationMiddleware(get_response).process_request(r1)
+        UserServiceMiddleware(get_response).process_request(r1)
+
+        AuthenticationMiddleware(get_response).process_request(r2)
+        UserServiceMiddleware(get_response).process_request(r2)
 
         user = User.objects.create_user(username='delay_user',
                                         email='fake2@fake',
@@ -69,7 +73,7 @@ class DegradedTestCase(TestCase):
 
         r1.session.save()
 
-        EnableServiceDegradationMiddleware().process_request(r1)
+        EnableServiceDegradationMiddleware(get_response).process_request(r1)
 
         client = DELAY_DAO()
         t1 = time.time()
@@ -80,7 +84,7 @@ class DegradedTestCase(TestCase):
 
         self.assertGreater(t2-t1, 0.09)
 
-        EnableServiceDegradationMiddleware().process_request(r2)
+        EnableServiceDegradationMiddleware(get_response).process_request(r2)
 
         response = client.getURL("/test", {})
         self.assertEquals(response.status, 200)
