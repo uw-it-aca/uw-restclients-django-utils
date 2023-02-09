@@ -15,6 +15,7 @@ from rc_django.views.errors import DegradePerformanceView
 from rc_django.middleware import EnableServiceDegradationMiddleware
 from rc_django.tests.test_views import missing_url
 import time
+import mock
 
 
 class DELAY_DAO(DAO):
@@ -47,14 +48,18 @@ class DegradedTestCase(TestCase):
         })
         r2 = RequestFactory().get("/")
 
-        SessionMiddleware().process_request(r1)
-        SessionMiddleware().process_request(r2)
+        get_response = mock.MagicMock()
+        session_middleware = SessionMiddleware(get_response)
+        auth_middleware = AuthenticationMiddleware(get_response)
+        userservice_middleware = UserServiceMiddleware(get_response)
 
-        AuthenticationMiddleware().process_request(r1)
-        UserServiceMiddleware().process_request(r1)
+        resp1 = session_middleware(r1)
+        resp1 = auth_middleware(r1)
+        resp1 = userservice_middleware(r1)
 
-        AuthenticationMiddleware().process_request(r2)
-        UserServiceMiddleware().process_request(r2)
+        resp2 = session_middleware(r2)
+        resp2 = auth_middleware(r2)
+        resp2 = userservice_middleware(r2)
 
         user = User.objects.create_user(username='delay_user',
                                         email='fake2@fake',
@@ -70,7 +75,8 @@ class DegradedTestCase(TestCase):
 
         r1.session.save()
 
-        EnableServiceDegradationMiddleware().process_request(r1)
+        degrade_middleware = EnableServiceDegradationMiddleware(get_response)
+        resp1 = degrade_middleware(r1)
 
         client = DELAY_DAO()
         t1 = time.time()
@@ -81,7 +87,7 @@ class DegradedTestCase(TestCase):
 
         self.assertGreater(t2-t1, 0.09)
 
-        EnableServiceDegradationMiddleware().process_request(r2)
+        resp2 = degrade_middleware(r2)
 
         response = client.getURL("/test", {})
         self.assertEquals(response.status, 200)
