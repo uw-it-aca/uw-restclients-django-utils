@@ -49,17 +49,15 @@ class DegradedTestCase(TestCase):
         r2 = RequestFactory().get("/")
 
         get_response = mock.MagicMock()
-        session_middleware = SessionMiddleware(get_response)
-        auth_middleware = AuthenticationMiddleware(get_response)
-        userservice_middleware = UserServiceMiddleware(get_response)
 
-        resp1 = session_middleware(r1)
-        resp1 = auth_middleware(r1)
-        resp1 = userservice_middleware(r1)
+        SessionMiddleware(get_response).process_request(r1)
+        SessionMiddleware(get_response).process_request(r2)
 
-        resp2 = session_middleware(r2)
-        resp2 = auth_middleware(r2)
-        resp2 = userservice_middleware(r2)
+        AuthenticationMiddleware(get_response).process_request(r1)
+        UserServiceMiddleware(get_response).process_request(r1)
+
+        AuthenticationMiddleware(get_response).process_request(r2)
+        UserServiceMiddleware(get_response).process_request(r2)
 
         user = User.objects.create_user(username='delay_user',
                                         email='fake2@fake',
@@ -75,8 +73,7 @@ class DegradedTestCase(TestCase):
 
         r1.session.save()
 
-        degrade_middleware = EnableServiceDegradationMiddleware(get_response)
-        resp1 = degrade_middleware(r1)
+        EnableServiceDegradationMiddleware(get_response).process_request(r1)
 
         client = DELAY_DAO()
         t1 = time.time()
@@ -87,7 +84,7 @@ class DegradedTestCase(TestCase):
 
         self.assertGreater(t2-t1, 0.09)
 
-        resp2 = degrade_middleware(r2)
+        EnableServiceDegradationMiddleware(get_response).process_request(r2)
 
         response = client.getURL("/test", {})
         self.assertEquals(response.status, 200)
