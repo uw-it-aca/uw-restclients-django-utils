@@ -1,4 +1,4 @@
-# Copyright 2023 UW-IT, University of Washington
+# Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -79,12 +79,12 @@ class DegradedTestCase(TestCase):
         t1 = time.time()
         response = client.getURL("/test", {})
         t2 = time.time()
-        self.assertEquals(response.status, 500)
-        self.assertEquals(response.data, "[oops")
+        self.assertEqual(response.status, 500)
+        self.assertEqual(response.data, "[oops")
 
         self.assertGreater(t2-t1, 0.09)
 
         EnableServiceDegradationMiddleware(get_response).process_request(r2)
 
         response = client.getURL("/test", {})
-        self.assertEquals(response.status, 200)
+        self.assertEqual(response.status, 200)

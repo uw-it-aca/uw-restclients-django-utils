@@ -1,4 +1,4 @@
-# Copyright 2023 UW-IT, University of Washington
+# Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -75,11 +75,11 @@ class ViewNoAuthTest(TestCase):
         # No auth module in settings
         url = reverse("restclients_proxy", args=["test", "test/v1"])
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 401)
+        self.assertEqual(response.status_code, 401)
 
         url = reverse("restclients_customform", args=["test", "index.html"])
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 401)
+        self.assertEqual(response.status_code, 401)
 
 
 @override_settings(
@@ -110,12 +110,12 @@ class RestProxyViewTest(TestCase):
                           password=get_user_pass('test_view'))
 
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         url = reverse("restclients_proxy", args=[
             "test", "test/v1?a=one&b=two&c=one%20two"])
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_service_errors(self):
         get_user('test_view')
@@ -125,12 +125,12 @@ class RestProxyViewTest(TestCase):
         # Unauthorized service
         url = reverse("restclients_proxy", args=["secret", "test/v1"])
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 401)
+        self.assertEqual(response.status_code, 401)
 
         # Missing service
         url = reverse("restclients_proxy", args=["fake", "test/v1"])
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
         self.assertIn(b"Missing service: fake", response.content)
 
 
@@ -152,20 +152,20 @@ class RestSearchViewTest(TestCase):
         # missing form values
         url = reverse("restclients_customform", args=["libcurrics", "default"])
         response = self.client.post(url)
-        self.assertEquals(response.status_code, 400)
+        self.assertEqual(response.status_code, 400)
         self.assertIn(b"Missing reqired form value: 'campus'",
                       response.content)
 
         url = reverse("restclients_customform", args=["libcurrics", "default"])
         response = self.client.post(url, {"campus": "sea"})
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
             "/view/libcurrics/currics_db/api/v1/data/defaultGuide/sea")
 
         url = reverse("restclients_customform", args=["libraries", "accounts"])
         response = self.client.post(url, {"id": "\xae"})
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url,
                          "/view/libraries/mylibinfo/v1/?id=%C2%AE")
 
@@ -185,7 +185,7 @@ class RestSearchViewTest(TestCase):
 
         # no auth
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertTrue("next=/search/libraries/index.html" in response.url)
 
         # with auth
@@ -193,10 +193,10 @@ class RestSearchViewTest(TestCase):
         self.client.login(username='test_view',
                           password=get_user_pass('test_view'))
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertIn(b'<form method="post" action="/search/libraries/index">',
                       response.content)
 
         url = reverse("restclients_customform", args=["fake", "index.html"])
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
