@@ -1,4 +1,4 @@
-# Django utilities for enhancing UW REST Clients
+# Django utilities for supporting UW REST Clients
 
 [![Build Status](https://github.com/uw-it-aca/uw-restclients-django-utils/workflows/tests/badge.svg)](https://github.com/uw-it-aca/uw-restclients-django-utils/actions)
 [![Coverage Status](https://coveralls.io/repos/uw-it-aca/uw-restclients-django-utils/badge.svg?branch=main)](https://coveralls.io/r/uw-it-aca/uw-restclients-django-utils?branch=main)
