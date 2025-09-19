@@ -22,7 +22,7 @@ setup(
     author_email="aca-it@uw.edu",
     include_package_data=True,
     install_requires=[
-        'django>3.2,<6',
+        'django',
         'uw-restclients-core',
         'django-userservice',
     ],

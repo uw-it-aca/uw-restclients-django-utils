@@ -28,7 +28,7 @@ name: tests
 env:
   APP_NAME: rc_django
   CONF_PATH: conf
-  COVERAGE_DJANGO_VERSION: '4.2'
+  COVERAGE_DJANGO_VERSION: '5.2'
 
 on:
   push:
