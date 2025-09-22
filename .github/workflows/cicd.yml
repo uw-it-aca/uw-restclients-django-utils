@@ -29,6 +29,7 @@ env:
   APP_NAME: rc_django
   CONF_PATH: conf
   COVERAGE_DJANGO_VERSION: '5.2'
+  COVERAGE_PYTHON_VERSION: '3.12'
 
 on:
   push:
@@ -93,14 +94,13 @@ jobs:
           python -Wd -m coverage run --source=${APP_NAME}/ manage.py test ${APP_NAME}
 
       - name: Report Test Coverage
-        if: matrix.django-version == env.COVERAGE_DJANGO_VERSION
+        if: |
+          matrix.django-version == env.COVERAGE_DJANGO_VERSION &&
+          matrix.python-version == env.COVERAGE_PYTHON_VERSION
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         shell: bash
-        run: |
-          python -m pip install --upgrade pip coverage coveralls==3.3.1
-          coveralls
+        run: coveralls
 
   publish:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags')
