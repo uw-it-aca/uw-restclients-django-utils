@@ -97,7 +97,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
-        run: coveralls
+        run: |
+          # gem install coveralls-lcov
+          python -m pip install --upgrade pip coverage coveralls==3.3.1
+          coveralls
 
   publish:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags')
