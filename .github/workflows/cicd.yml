@@ -96,10 +96,9 @@ jobs:
         if: matrix.django-version == env.COVERAGE_DJANGO_VERSION
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          # COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         shell: bash
         run: |
-          # gem install coveralls-lcov
           python -m pip install --upgrade pip coverage coveralls==3.3.1
           coveralls
 
