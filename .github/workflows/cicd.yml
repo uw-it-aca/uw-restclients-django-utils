@@ -29,6 +29,7 @@ env:
   APP_NAME: rc_django
   CONF_PATH: conf
   COVERAGE_DJANGO_VERSION: '5.2'
+  COVERAGE_PYTHON_VERSION: '3.12'
 
 on:
   push:
@@ -47,9 +48,9 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.12'
-          - '3.11'
           - '3.10'
+          - '3.11'
+          - '3.12'
         django-version:
           - '4.2'
           - '5.2'
@@ -93,7 +94,9 @@ jobs:
           python -Wd -m coverage run --source=${APP_NAME}/ manage.py test ${APP_NAME}
 
       - name: Report Test Coverage
-        if: matrix.django-version == env.COVERAGE_DJANGO_VERSION
+        if: |
+          matrix.django-version == env.COVERAGE_DJANGO_VERSION &&
+          matrix.python-version == env.COVERAGE_PYTHON_VERSION
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -110,10 +113,10 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup Python ${{ matrix.python-version }}
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.12'
 
       - name: Publish to PyPi
         uses: uw-it-aca/actions/publish-pypi@main
